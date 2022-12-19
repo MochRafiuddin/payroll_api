@@ -1,0 +1,87 @@
+.numeric {
+    /* text-align: right; */
+}
+
+.table thead th {
+    vertical-align: middle;
+    border: 1px solid #575757;
+    border-bottom-width: 1px !important;
+    text-align: center;
+}
+
+.table tbody td {
+    border: 1px solid #575757;
+}
+
+.table-bordered tbody tr td:first-child,
+.table-bordered thead tr:first-child th:first-child,
+.table-bordered tfoot tr td:first-child {
+    border-left: 1px solid #575757;
+}
+
+.table-bordered td,
+.table-bordered th {
+    border: 1px solid #575757;
+    border-top-color: rgb(87, 87, 87);
+    border-top-style: solid;
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    border-left-color: rgb(87, 87, 87);
+    border-left-style: solid;
+    border-left-width: 1px;
+    color: #393939;
+}
+
+div.dataTables_scrollBody table {
+
+    border-bottom-color: rgb(87, 87, 87);
+}
+
+.form-control,
+.custom-file-input,
+.custom-file-label {
+    border: 1px solid rgb(87, 87, 87);
+}
+
+.form-group label {
+    color: #404040 !important;
+}
+select.form-control:not([size]):not([multiple]){
+    height: calc(2.7rem + 2px) !important;
+}
+
+select.form-control,
+.select2-selection {
+    padding: 0.875rem 1.375rem !important;
+    border: 1px solid rgb(87, 87, 87) !important;
+}
+
+/* SPINNER */
+.spinner {
+    width: 56px;
+    height: 56px;
+    display: grid;
+    animation: spinner-plncf9 4s infinite;
+}
+
+.spinner::before,
+.spinner::after {
+    content: "";
+    grid-area: 1/1;
+    border: 9px solid;
+    border-radius: 50%;
+    border-color: #f8e46b #f8e46b #0000 #0000;
+    mix-blend-mode: darken;
+    animation: spinner-plncf9 1s infinite linear;
+}
+
+.spinner::after {
+    border-color: #0000 #0000 #dbdcef #dbdcef;
+    animation-direction: reverse;
+}
+
+@keyframes spinner-plncf9 {
+    100% {
+        transform: rotate(1turn);
+    }
+}

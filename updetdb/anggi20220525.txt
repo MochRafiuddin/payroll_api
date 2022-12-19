@@ -1,0 +1,72 @@
+CREATE TABLE `m_grup_karyawan` (
+  `id_grup_karyawan` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `kode_grup` varchar(50) NULL,
+  `nama_grup` varchar(100) NULL,
+  `created_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_by` int NOT NULL DEFAULT '0',
+  `edited_date` datetime NULL,
+  `edited_by` int NOT NULL DEFAULT '0',
+  `deleted` int NOT NULL DEFAULT '1' COMMENT '1 aktif, 0 hapus'
+);
+
+CREATE TABLE `m_shift_karyawan` (
+  `id_shift_karyawan` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `id_karyawan` int NOT NULL DEFAULT '0',
+  `id_shift` int NOT NULL DEFAULT '0',
+  `tanggal` date NULL,
+  `created_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_by` int NOT NULL DEFAULT '0',
+  `edited_by` int NOT NULL DEFAULT '0',
+  `edited_date` datetime NULL,
+  `deleted` int NOT NULL DEFAULT '1' COMMENT '1 aktif, 0 hapus'
+);
+
+CREATE TABLE `t_absensi` (
+  `id_absensi` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `id_karyawan` int NOT NULL DEFAULT '0',
+  `tanggal` date NULL,
+  `tanggal_masuk` datetime NULL,
+  `tanggal_keluar` datetime NULL,
+  `id_shift` int NOT NULL DEFAULT '0',
+  `menit_lembur` double NOT NULL DEFAULT '0',
+  `menit_terlambat` double NOT NULL DEFAULT '0',
+  `created_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_by` int NOT NULL DEFAULT '0',
+  `edited_date` datetime NULL,
+  `edited_by` int NOT NULL DEFAULT '0',
+  `deleted` int NOT NULL DEFAULT '1' COMMENT '1 aktif, 0 hapus'
+);
+
+CREATE TABLE `m_shift_grup` (
+  `id_shift_grup` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `id_grup_karyawan` int NOT NULL DEFAULT '0',
+  `id_shift` int NOT NULL DEFAULT '0',
+  `tanggal` date NULL,
+  `created_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_by` int NOT NULL DEFAULT '0',
+  `edited_date` datetime NULL,
+  `edited_by` int NOT NULL DEFAULT '0',
+  `deleted` int NOT NULL DEFAULT '1' COMMENT '1 aktif, 0 hapus'
+);
+
+ALTER TABLE `m_shift`
+ADD `kode_shift` varchar(50) NULL,
+ADD `jam_masuk` time NULL AFTER `kode_shift`,
+ADD `jam_keluar` time NULL AFTER `jam_masuk`;
+
+ALTER TABLE `m_karyawan`
+ADD `id_grup_karyawan` int NOT NULL DEFAULT '0';
+
+ALTER TABLE `m_karyawan`
+CHANGE `no_npwp` `no_npwp` varchar(50) COLLATE 'utf8mb4_unicode_ci' NULL AFTER `status_npwp`;
+
+ALTER TABLE `m_karyawan`
+CHANGE `id_shift` `id_shift` int NOT NULL DEFAULT '0' AFTER `nama_karyawan`;
+
+ALTER TABLE `m_grup_karyawan`
+CHANGE `edited_date` `updated_date` datetime NULL AFTER `created_by`,
+CHANGE `edited_by` `updated_by` int NOT NULL DEFAULT '0' AFTER `updated_date`;
+
+ALTER TABLE `m_shift_karyawan`
+CHANGE `edited_by` `updated_by` int NOT NULL DEFAULT '0' AFTER `created_by`,
+CHANGE `edited_date` `updated_date` datetime NULL AFTER `updated_by`;
