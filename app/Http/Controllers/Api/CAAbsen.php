@@ -281,8 +281,8 @@ class CAAbsen extends Controller
         $token = MApiKey::where('token',$request->header('auth-key'))->first();
         $user = User::where('id_user',$token->id_user)->first();
 
-        $foto = round(microtime(true) * 1000).'.'.$request->file('foto')->extension();
-        $request->file('foto')->move(public_path('upload/foto'), $foto);
+        // $foto = round(microtime(true) * 1000).'.'.$request->file('foto')->extension();
+        // $request->file('foto')->move(public_path('upload/foto'), $foto);
 
         $mCuti = new LogSelfi;
         $mCuti->id_karyawan = $user->id_karyawan;
@@ -290,7 +290,7 @@ class CAAbsen extends Controller
         $mCuti->type = 0;
         $mCuti->latitude = $request->latitude;
         $mCuti->longitude = $request->longitude;
-        $mCuti->foto = $foto;
+        $mCuti->foto = 'foto';
         $mCuti->status = 0;
         $mCuti->save();
 
