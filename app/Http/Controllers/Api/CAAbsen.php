@@ -366,7 +366,18 @@ class CAAbsen extends Controller
     public function get_jam(Request $request)
     {
         $token = MApiKey::where('token',$request->header('auth-key'))->first();
-        $user = User::where('id_user',$token->id_user)->first();        
+        $user = User::where('id_user',$token->id_user)->first();   
+        
+        $status = LogSelfi::whereDate('jam_selfi', date('Y-m-d'))->where('id_karyawan',$user->id_karyawan)->orderBy('jam_selfi','desc')->first();
+        if ($status) {
+            if ($status->type == 0) {
+                $data = 'Masuk';
+            }elseif ($status->type == 1) {
+                $data = 'Keluar';
+            }
+        }else {
+            $data ='Belum_absen';
+        }
         
         $in = LogSelfi::whereDate('jam_selfi', date('Y-m-d'))->where('id_karyawan',$user->id_karyawan)->where('type',0)->orderBy('jam_selfi','desc')->first();
         $out = LogSelfi::whereDate('jam_selfi', date('Y-m-d'))->where('id_karyawan',$user->id_karyawan)->where('type',1)->orderBy('jam_selfi','desc')->first();        
@@ -399,6 +410,7 @@ class CAAbsen extends Controller
             'clockin' => $clockin,
             'clockout' => $clockout,
             'working_hr' => $selisih,
+            'status' => $data,
             'code' => 1,
         ], 200);
     }
