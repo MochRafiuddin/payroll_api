@@ -44,10 +44,30 @@ class CAAbsen extends Controller
             ->orderBy('a.tanggal','asc')
             ->get()->toArray();
 
-        // $hsl = array_search("2022-08-06", array_column($m, 'tanggal'));
-        // array_unshift($m, '');     // Prepend a dummy element to the start of the array.
-        // unset($m[0]); 
-        // dd($m);
+        $masuk = TAbsensi::from('t_absensi as a')            
+            ->select('a.id_absensi')
+            ->whereBetween('a.tanggal', [$start, $end])
+            ->where('a.id_karyawan',$user->id_karyawan)
+            ->where('a.id_tipe_absensi',1)            
+            ->get()->count();
+
+        $terlambat = TAbsensi::from('t_absensi as a')            
+            ->select('a.id_absensi')
+            ->whereBetween('a.tanggal', [$start, $end])
+            ->where('a.id_karyawan',$user->id_karyawan)            
+            ->sum('a.menit_terlambat');
+
+        $early_leave = TAbsensi::from('t_absensi as a')            
+            ->select('a.id_absensi')
+            ->whereBetween('a.tanggal', [$start, $end])
+            ->where('a.id_karyawan',$user->id_karyawan)            
+            ->sum('a.menit_early_leave');
+        $summary =[
+            'masuk' => $masuk,
+            'terlambat' => $terlambat,
+            'early_leave' => $early_leave,
+        ];
+        
         $data = [];
         $period = new DatePeriod(
             new DateTime($start),
@@ -64,6 +84,7 @@ class CAAbsen extends Controller
                 $data[$key]['terlambat'] = $m[$hsl]["menit_terlambat"];
                 $data[$key]['early leave'] = $m[$hsl]["menit_early_leave"];
                 $data[$key]['nama_tipe_absensi'] = $m[$hsl]["nama_tipe_absensi"];
+                $data[$key]['id_tipe_absensi'] = $m[$hsl]["id_tipe_absensi"];
             }else{
                 $data[$key]['tanggal'] = $value->format('Y-m-d');
                 $data[$key]['masuk'] = null;
@@ -71,6 +92,7 @@ class CAAbsen extends Controller
                 $data[$key]['terlambat'] = null;
                 $data[$key]['early leave'] = null;
                 $data[$key]['nama_tipe_absensi'] = "tidak masuk";
+                $data[$key]['id_tipe_absensi'] = "0";
             }
         }
 
@@ -79,7 +101,8 @@ class CAAbsen extends Controller
             'success' => true,
             'message' => 'Success',
             'code' => 1,
-            'data' => $data
+            'data' => $data,
+            'summary' => $summary
         ], 200);
     }    
 
