@@ -337,5 +337,69 @@ class CAAbsen extends Controller
             'message' => 'Absensi Success',
             'code' => 1,
         ], 200);
-    }    
+    }
+
+    public function get_status_absen(Request $request)
+    {
+        $token = MApiKey::where('token',$request->header('auth-key'))->first();
+        $user = User::where('id_user',$token->id_user)->first();        
+
+        $status = LogSelfi::whereDate('jam_selfi', date('Y-m-d'))->where('id_karyawan',$user->id_karyawan)->orderBy('jam_selfi','desc')->first();
+        if ($status) {
+            if ($status->type == 0) {
+                $data = 'Masuk';
+            }elseif ($status->type == 1) {
+                $data = 'Keluar';
+            }
+        }else {
+            $data ='Belum_absen';
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Success',
+            'status' => $data,
+            'code' => 1,
+        ], 200);
+    }
+    
+    public function get_jam(Request $request)
+    {
+        $token = MApiKey::where('token',$request->header('auth-key'))->first();
+        $user = User::where('id_user',$token->id_user)->first();        
+        
+        $in = LogSelfi::whereDate('jam_selfi', date('Y-m-d'))->where('id_karyawan',$user->id_karyawan)->where('type',0)->orderBy('jam_selfi','desc')->first();
+        $out = LogSelfi::whereDate('jam_selfi', date('Y-m-d'))->where('id_karyawan',$user->id_karyawan)->where('type',1)->orderBy('jam_selfi','desc')->first();        
+
+        if ($in != null) {
+            $clockin = date('H:i',strtotime($in->jam_selfi));
+        }else {
+            $clockin = '-';
+        }
+
+        if ($out) {
+            $clockout = date('H:i',strtotime($out->jam_selfi));
+        }else {
+            $clockout = '-';
+        }
+
+        if ($in != null && $out != null) {            
+            $seconds = strtotime($out->jam_selfi) - strtotime($in->jam_selfi);
+            $selisih = intval($seconds / 60 / 60);
+        }elseif ($in != null && $out == null) {
+            $seconds = strtotime(date('Y-m-d H:i:s')) - strtotime($in->jam_selfi);
+            $selisih = intval($seconds / 60 / 60);
+        }else{
+            $selisih = '-';
+        } 
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Success',
+            'clockin' => $clockin,
+            'clockout' => $clockout,
+            'working_hr' => $selisih,
+            'code' => 1,
+        ], 200);
+    }
 }

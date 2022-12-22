@@ -29,6 +29,8 @@ Route::group(['middleware' => 'myauth'], function () {
     Route::get('/riwayat-cuti', [CAAbsen::class, 'riwayat_cuti']);
     Route::post('/clock-in', [CAAbsen::class, 'clockin']);
     Route::post('/clock-out', [CAAbsen::class, 'clockout']);
+    Route::get('/status-absen', [CAAbsen::class, 'get_status_absen']);
+    Route::get('/jam-absen', [CAAbsen::class, 'get_jam']);
 
     Route::get('/history-slip-gaji', [CAGaji::class, 'slip_gaji']);
     Route::get('/detail-slip-gaji', [CAGaji::class, 'detail_slip_gaji']);
