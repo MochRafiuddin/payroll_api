@@ -134,7 +134,7 @@
                     <input type="input" class="form-control" name="valFilterMonthYear" hidden>
                     <input type="input" class="form-control" name="valIdGrup" hidden>
                     <label>Ubah Shift ke :</label>
-                    <select class="form-control" name="id_shift" required>
+                    <select class="form-control" name="id_shift" id='id_shift' required>
                         <option value="">-- Pilih Shift --</option>
                         @foreach($m_shift as $data)
                         <option value="{{$data->id_shift}}">{{$data->nama_shift}}</option>
@@ -256,9 +256,9 @@
 
                         if (search_shift.length > 0) {
                             if (search_shift[0].nama_shift.toLowerCase() == 'libur'){
-                                search_shift[0].nama_shift = '<div class="badge badge-outline-success badge-pill pointer" tanggal="'+search_shift[0].tanggal+'" id_karyawan="'+data_karyawan[i].id_karyawan+'" nama_karyawan="'+data_karyawan[i].nama_karyawan+'">'+search_shift[0].nama_shift+'</div>';
+                                search_shift[0].nama_shift = '<div class="badge badge-outline-success badge-pill pointer" tanggal="'+search_shift[0].tanggal+'" id_karyawan="'+data_karyawan[i].id_karyawan+'" nama_karyawan="'+data_karyawan[i].nama_karyawan+'" id_shift="'+search_shift[0].id_shift+'">'+search_shift[0].nama_shift+'</div>';
                             }else{
-                                search_shift[0].nama_shift = '<div class="badge badge-outline-primary badge-pill pointer" tanggal="'+search_shift[0].tanggal+'" id_karyawan="'+data_karyawan[i].id_karyawan+'" nama_karyawan="'+data_karyawan[i].nama_karyawan+'">'+search_shift[0].nama_shift+'</div>';
+                                search_shift[0].nama_shift = '<div class="badge badge-outline-primary badge-pill pointer" tanggal="'+search_shift[0].tanggal+'" id_karyawan="'+data_karyawan[i].id_karyawan+'" nama_karyawan="'+data_karyawan[i].nama_karyawan+'" id_shift="'+search_shift[0].id_shift+'">'+search_shift[0].nama_shift+'</div>';
                             }
                             html_body_tabel2 += '<td>'+search_shift[0].nama_shift+'</td>';
                         } else {
@@ -291,8 +291,11 @@
                 setTableShiftHeader();
 
                 $(".tableShifKaryawan tbody").html(html_body_tabel);
-
-                $('.tableShifKaryawan').DataTable();
+                
+                $('.tableShifKaryawan').DataTable({
+                    "bStateSave": true,                    
+                });
+                // $('.tableShifKaryawan').DataTable();
 
                 $(".dataTables_filter input").attr("placeholder", "All Karyawan");
 
@@ -312,6 +315,7 @@
             let nama_karyawan = $(this).attr('nama_karyawan');
             let id_karyawan = $(this).attr('id_karyawan');
             let tanggal = $(this).attr('tanggal');
+            let id_shift = $(this).attr('id_shift');
             let tanggal_show = formatDate(tanggal);
             let filterMonthYear = $('input[name=filterMonthYear]').val();
             let filterIdGrup = $('select[name=filterIdGrup]').val();
@@ -321,7 +325,9 @@
             $('input[name=tanggal]').val(tanggal);
             $('input[name=valFilterMonthYear]').val(filterMonthYear);
             $('input[name=valIdGrup]').val(filterIdGrup);
+            $('#id_shift').val(id_shift).change();
             $('#modalInput').modal('show');
+            console.log(id_shift);
         })
 
         function formatDate(date) {

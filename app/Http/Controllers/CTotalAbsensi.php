@@ -37,7 +37,7 @@ class CTotalAbsensi extends Controller
         $data_karyawan = MKaryawan::withDeleted()->select("nama_karyawan","id_karyawan");
         
         if ($id_departemen || $id_departemen != "") {
-            $data_karyawan->where('id_departemen',$id_departemen);
+            $data_karyawan->where('id_departemen_label',$id_departemen);
         }
 
         $data_karyawan = $data_karyawan->get();

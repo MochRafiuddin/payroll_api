@@ -158,7 +158,14 @@ table td{
                                 <tr>
                                     <td>Dept/Section</td>
                                     <td>:</td>
-                                    <td style='white-space: nowrap'>{{$departemen->nama_departemen}}</td>
+                                    <td style='white-space: nowrap'>
+                                    @php
+                                        if($departemen == null){
+                                            echo '';
+                                        }else{
+                                            echo $departemen->nama_departemen;
+                                        }
+                                    @endphp</td>
                                 </tr>
                                 <tr>
                                     <td>Position</td>

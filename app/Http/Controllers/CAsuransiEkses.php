@@ -22,7 +22,7 @@ class CAsuransiEkses extends Controller
 
     public function form_tambah()
     {
-        $m_karyawan = MKaryawan::all();
+        $m_karyawan = MKaryawan::withDeleted()->where('aktif',1)->get();
         $bulan_aktif = Session::get('periode_bulan');
         $tahun_aktif = Session::get('periode_tahun');
         return view('asuransi_ekses.form', compact('m_karyawan','bulan_aktif','tahun_aktif'))->with('title','Tambah Asuransi Ekses');
@@ -35,6 +35,7 @@ class CAsuransiEkses extends Controller
                         ->leftJoin('map_gaji_karyawan as b','a.id_karyawan','=','b.id_karyawan')
                         ->select('a.*','b.nominal as gaji_pokok')
                         ->where('a.id_karyawan',$t_asuransi->id_karyawan)->where('b.id_gaji','1')
+                        ->where('a.aktif',1)
                         ->first();
         $m_karyawan->gaji_30 = $m_karyawan->gaji_pokok*(30/100);
         $t_asuransi->hutang_karyawan = DB::table('t_asuransi_det')->where('id_asuransi',$id)->where('deleted','1')->sum('nominal_hutang');

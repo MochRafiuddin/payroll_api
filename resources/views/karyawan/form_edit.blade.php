@@ -37,7 +37,8 @@ $name[] = 'id_jabatan'; // def 0 -> 0 belum, 1 sudah
 $name[] = 'id_grup_karyawan'; 
 $name[] = 'employee_id'; 
 $name[] = 'no_bpjs'; 
-$name[] = 'max_izin'; 
+$name[] = 'max_izin';
+$name[] = 'id_departemen_label';
 
 //dd(old($name[3]));
 //dd(old($name[19]) == 0);
@@ -81,7 +82,7 @@ $name[] = 'max_izin';
                         </div>
                         <div class="col-md-4">
                            <div class="form-group">
-                               <label for="exampleInputEmail1">Departement</label>
+                               <label for="exampleInputEmail1">@lang('umum.departemen_proses')</label>
                                <select class="form-control @error($name[2]) is-invalid @enderror"
                                    name="{{$name[2]}}">
                                    <option value="" selected disabled> Pilih Departement </option>
@@ -89,6 +90,22 @@ $name[] = 'max_izin';
                                    <option value="<?= $key->{$name[2]} ?>"
                                        {{(old($name[2]) == $key->{$name[2]}) ? 'selected' : ''}}
                                        {{Helper::showDataSelected($data,$name[2],$key->{$name[2]})}}>
+                                       {{$key->nama_departemen}}
+                                   </option>
+                                   @endforeach
+                               </select>
+                           </div>
+                        </div>
+                        <div class="col-md-4">
+                           <div class="form-group">
+                               <label for="exampleInputEmail1">@lang('umum.departemen_label')</label>
+                               <select class="form-control @error($name[30]) is-invalid @enderror"
+                                   name="{{$name[30]}}">
+                                   <option value="" selected disabled> Pilih Departement</option>
+                                   @foreach($departement as $key)
+                                   <option value="{{$key->id_departemen}}" 
+                                       {{(old($name[30]) == $key->id_departemen) ? 'selected' : ''}}
+                                       {{Helper::showDataSelected($data,$name[30],$key->id_departemen)}}>
                                        {{$key->nama_departemen}}
                                    </option>
                                    @endforeach

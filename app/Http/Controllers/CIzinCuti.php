@@ -79,9 +79,10 @@ class CIzinCuti extends Controller
         // }
         $anggota = MapAnggota::select('id_karyawan')->where('id_submitter',Auth::user()->id_karyawan);
         if (Auth::user()->id_role == 1) {
-            $karyawan = MKaryawan::withDeleted()->get();
+            $karyawan = MKaryawan::withDeleted()->where('aktif',1)->get();
         }else{            
             $karyawan = MKaryawan::where('id_karyawan',Auth::user()->id_karyawan)
+                ->where('aktif',1)
                 ->orWhereIn('id_karyawan', $anggota)
                 ->get();
         }
@@ -249,9 +250,10 @@ class CIzinCuti extends Controller
         // }
         $anggota = MapAnggota::select('id_karyawan')->where('id_submitter',Auth::user()->id_karyawan);
         if (Auth::user()->id_role == 1) {
-            $karyawan = MKaryawan::withDeleted()->get();
+            $karyawan = MKaryawan::withDeleted()->where('aktif',1)->get();
         }else{            
             $karyawan = MKaryawan::where('id_karyawan',Auth::user()->id_karyawan)
+                ->where('aktif',1)
                 ->orWhereIn('id_karyawan', $anggota)
                 ->get();
         }
@@ -316,7 +318,7 @@ class CIzinCuti extends Controller
     {   $mCuti = TIzinnCuti::findOrFail($id);
         TAbsensi::where('id_karyawan',$mCuti->id_karyawan)->where('id_tipe_absensi',$mCuti->id_tipe_absensi)->where('id_izin',$mCuti->id_izin)->delete();
         $mCuti->destroyed($id);
-        TIzinDetail::where('id_izin',)->delete();    
+        TIzinDetail::where('id_izin',$id)->delete();
         return redirect()->route('izin-cuti-index')->with('msg','Sukses Menambahkan Data');
 
     }
@@ -384,7 +386,7 @@ class CIzinCuti extends Controller
                 $model = $model->where('m_karyawan.id_departemen',$departemen->id_departemen);
             }
             if ($departement) {
-                $model = $model->where('m_karyawan.id_departemen',$departement);
+                $model = $model->where('m_karyawan.id_departemen_label',$departement);
             }
             if ($filterkar) {
                 $model = $model->where('m_karyawan.id_karyawan',$filterkar);                

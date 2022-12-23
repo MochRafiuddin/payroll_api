@@ -14,6 +14,7 @@ use App\Models\MStatusKaryawan;
 use App\Models\MStatusKawin;
 use App\Models\MShiftGrup;
 use App\Models\MSetting;
+use App\Models\TAbsensi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -30,6 +31,7 @@ class CKaryawan extends Controller
     public $validator =  [
             'nik' => 'required',
             'id_departemen' => 'required',
+            'id_departemen_label' => 'required',
             'id_bank' => 'required',
             'nama_karyawan' => 'required',
             'no_rekening' => 'required',
@@ -116,8 +118,19 @@ class CKaryawan extends Controller
                         ->where('m_shift_grup.deleted', 1)
                         ->whereBetween('m_shift_grup.tanggal', [$start_date,$end_date])
                         ->where('m_shift_grup.id_grup_karyawan', $request->id_grup_karyawan);
-            
+        // dd($select_grup->where('m_shift_grup.id_shift',1)->get());
         $rows_grup_inserted = MShiftKaryawan::insertUsing(['id_karyawan','created_by','id_shift', 'tanggal'], $select_grup);
+
+        foreach ($select_grup->where('m_shift_grup.id_shift',1)->get() as $key) {            
+            $arr_ins_t_absensi = [
+                'id_karyawan' => $mJabatan->id_karyawan,
+                'id_shift' => $key->id_shift,
+                'tanggal' => $key->tanggal,
+                'id_tipe_absensi' => 3,
+                'created_by' => $user->id_user,
+            ];
+            TAbsensi::insert($arr_ins_t_absensi);
+        }
 
 
         return redirect()->route('karyawan-index')->with('msg','Sukses Menambahkan Data');
@@ -190,9 +203,10 @@ class CKaryawan extends Controller
         if ($id_grup_lama != $request->id_grup_karyawan) {
         // dd($id_grup_lama,$request->id_grup_karyawan);
 
-            $start_date = Carbon::parse(substr($request->daterange, 0,10))->format('Y-m-d');
-            $end_date = Carbon::parse(substr($request->daterange, 13,10))->format('Y-m-d');
+            $start_date = Carbon::createFromFormat('d/m/Y',substr($request->daterange, 0,10))->format('Y-m-d');
+            $end_date = Carbon::createFromFormat('d/m/Y',substr($request->daterange, 13,10))->format('Y-m-d');
             MShiftKaryawan::where("id_karyawan",$id)->whereBetween('tanggal',[$start_date,$end_date])->delete();
+            TAbsensi::where("id_karyawan",$id)->whereBetween('tanggal',[$start_date,$end_date])->delete();
 
             $select_grup = MShiftGrup::select(DB::raw("'".$id."','".$user->id_user."'"),'id_shift','tanggal')
                             ->where('m_shift_grup.deleted', 1)
@@ -201,6 +215,17 @@ class CKaryawan extends Controller
 
                 
             $rows_grup_inserted = MShiftKaryawan::insertUsing(['id_karyawan','created_by','id_shift', 'tanggal'], $select_grup);
+
+            foreach ($select_grup->where('m_shift_grup.id_shift',1)->get() as $key) {            
+                $arr_ins_t_absensi = [
+                    'id_karyawan' => $mJabatan->id_karyawan,
+                    'id_shift' => $key->id_shift,
+                    'tanggal' => $key->tanggal,
+                    'id_tipe_absensi' => 3,
+                    'created_by' => $user->id_user,
+                ];
+                TAbsensi::insert($arr_ins_t_absensi);
+            }
             
         }
         Session::flash('state', $request->filter); 
@@ -248,7 +273,7 @@ class CKaryawan extends Controller
                 ->leftJoin('m_grup_karyawan', 'm_grup_karyawan.id_grup_karyawan', '=', 'm_karyawan.id_grup_karyawan')
                 ->leftJoin('m_departemen', 'm_departemen.id_departemen', '=', 'm_karyawan.id_departemen');
         if ($departement != 0) {
-            $model = $model->where('m_karyawan.id_departemen',$departement);
+            $model = $model->where('m_karyawan.id_departemen_label',$departement);
         }
 
         return DataTables::of($model)
@@ -262,6 +287,15 @@ class CKaryawan extends Controller
                 }
                 return $btn;
             })
+            ->addColumn('nama_departemen_label', function($model)  {
+                $dep = MDepartement::withDeleted()->where('id_departemen',$model->id_departemen_label)->first();
+                if ($model->id_departemen_label == 0) {
+                    $btn = '';
+                }else {
+                    $btn = $dep->nama_departemen;
+                }
+                return $btn;
+            })
             ->rawColumns(['action'])
             ->addIndexColumn()
             ->toJson();
@@ -270,6 +304,7 @@ class CKaryawan extends Controller
     {
         $mJabatan->nik = $request->nik;
         $mJabatan->id_departemen = $request->id_departemen;
+        $mJabatan->id_departemen_label = $request->id_departemen_label;
         $mJabatan->id_bank = $request->id_bank;
         $mJabatan->nama_karyawan = $request->nama_karyawan;
         $mJabatan->no_rekening = $request->no_rekening;

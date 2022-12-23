@@ -8,9 +8,9 @@ use App\Traits\Helper;
         <div class="card">
             <div class="card-body">
                 <h4>Data Absensi Karyawan</h4><br>
-                <form action="{{url('absensi-karyawan/view-filter')}}" method="post">
+                <!-- <form action="{{url('absensi-karyawan/view-filter')}}" method="post"> -->
                     <div class="row">
-                            @csrf
+                            <!-- @csrf -->
                             <div class="form-group col-md-5">
                                 <label for="">Tanggal</label>
                                 <input class="form-control" type="text" name="tanggal" id="tanggal" value="{{$tanggal}}">
@@ -24,7 +24,7 @@ use App\Traits\Helper;
                                 <input type="submit" class="btn btn-success form-control savedata" value="Cari" />                    
                             </div>
                         </div>
-                    </form>   
+                    <!-- </form>    -->
                 <div class="row mb-4">
                     <div class="col text-right">
                         @if(Helper::can_akses('riwayat_absensi_karyawan_export'))
@@ -166,6 +166,11 @@ use App\Traits\Helper;
               $(this).val('');
           });
 
+          $(".savedata").on('click', function() {            
+            var date_range = $('#tanggal').val();            
+            window.location = "{{ url('absensi-karyawan/view-filter') }}?tanggal="+date_range;
+        });
+
         read_data();
 
         function read_data() {
@@ -205,13 +210,17 @@ use App\Traits\Helper;
                                 var masuk=search_absen[0].tanggal_masuk;
                                 var keluar=search_absen[0].tanggal_keluar;
                                 if (search_absen[0].menit_terlambat >= 1 && search_absen[0].menit_terlambat <= 4 ) {
-                                    html_body_tabel2 += "<td><p style='white-space:nowrap;'>Masuk : "+masuk+"<br> Keluar : "+keluar+" <br> Terlambat : <span style='color: #dede07;'>"+search_absen[0].menit_terlambat+" Menit</span><br>";
+                                    html_body_tabel2 += "<td><div class='d-flex justify-content-end' style='margin-top:-8px;margin-right:-9px;margin-bottom:5px'><span class='mark badge badge-info' style='font-size: 8px' id_karyawan='"+search_absen[0].id_karyawan+"' tanggal='"+search_absen[0].tanggal+"'>Mark</span></div>\
+                                    <p style='white-space:nowrap;'>Masuk : "+masuk+"<br> Keluar : "+keluar+" <br> Terlambat : <span style='color: #dede07;'>"+search_absen[0].menit_terlambat+" Menit</span><br>";
                                 }else if (search_absen[0].menit_terlambat >= 5 && search_absen[0].menit_terlambat <= 29) {
-                                    html_body_tabel2 += "<td><p style='white-space:nowrap;'>Masuk : "+masuk+"<br> Keluar : "+keluar+" <br> Terlambat : <span style='color: orange;'>"+search_absen[0].menit_terlambat+" Menit</span><br>";
+                                    html_body_tabel2 += "<td><div class='d-flex justify-content-end' style='margin-top:-8px;margin-right:-9px;margin-bottom:5px'><span class='mark badge badge-info' style='font-size: 8px' id_karyawan='"+search_absen[0].id_karyawan+"' tanggal='"+search_absen[0].tanggal+"'>Mark</span></div>\
+                                    <p style='white-space:nowrap;'>Masuk : "+masuk+"<br> Keluar : "+keluar+" <br> Terlambat : <span style='color: orange;'>"+search_absen[0].menit_terlambat+" Menit</span><br>";
                                 }else if(search_absen[0].menit_terlambat >= 30){
-                                    html_body_tabel2 += "<td><p style='white-space:nowrap;'>Masuk : "+masuk+"<br> Keluar : "+keluar+" <br> Terlambat : <span style='color: red;'>"+search_absen[0].menit_terlambat+" Menit</span><br>";
+                                    html_body_tabel2 += "<td><div class='d-flex justify-content-end' style='margin-top:-8px;margin-right:-9px;margin-bottom:5px'><span class='mark badge badge-info' style='font-size: 8px' id_karyawan='"+search_absen[0].id_karyawan+"' tanggal='"+search_absen[0].tanggal+"'>Mark</span></div>\
+                                    <p style='white-space:nowrap;'>Masuk : "+masuk+"<br> Keluar : "+keluar+" <br> Terlambat : <span style='color: red;'>"+search_absen[0].menit_terlambat+" Menit</span><br>";
                                 }else{
-                                    html_body_tabel2 += "<td><p style='white-space:nowrap;'>Masuk : "+masuk+"<br> Keluar : "+keluar+" <br> Terlambat : "+search_absen[0].menit_terlambat+" Menit<br>";
+                                    html_body_tabel2 += "<td><div class='d-flex justify-content-end' style='margin-top:-8px;margin-right:-9px;margin-bottom:5px'><span class='mark badge badge-info' style='font-size: 8px' id_karyawan='"+search_absen[0].id_karyawan+"' tanggal='"+search_absen[0].tanggal+"'>Mark</span></div>\
+                                    <p style='white-space:nowrap;'>Masuk : "+masuk+"<br> Keluar : "+keluar+" <br> Terlambat : "+search_absen[0].menit_terlambat+" Menit<br>";
                                 }
                                 if (search_absen[0].menit_early_leave >= 1 && search_absen[0].menit_early_leave <= 4 ) {
                                     html_body_tabel2 += "Early Leave : <span style='color: #dede07;'>"+search_absen[0].menit_early_leave+" Menit</span></p></td>";
@@ -223,12 +232,15 @@ use App\Traits\Helper;
                                     html_body_tabel2 += "Early Leave : "+search_absen[0].menit_early_leave+" Menit</p></td>";
                                 }
                             }else if (search_absen[0].id_tipe_absensi == 3) {
-                                html_body_tabel2 += "<td><div class='badge badge-outline-success badge-pill pointer'>"+search_absen[0].nama_tipe_absensi+"</div></td>";
+                                html_body_tabel2 += "<td height='81px'><div class='d-flex justify-content-end' style='margin-top:-38px;margin-right:-9px;margin-bottom:15px'><span class='badge badge-info mark' style='font-size: 8px' id_karyawan='"+search_absen[0].id_karyawan+"' tanggal='"+m.format('YYYY-MM-DD')+"'>Mark</span></div>\
+                                <div class='d-flex justify-content-center'><span class='badge badge-outline-success badge-pill pointer'>"+search_absen[0].nama_tipe_absensi+"</span></div></td>";
                             }else{
-                                html_body_tabel2 += "<td><div class='badge badge-outline-primary badge-pill pointer'>"+search_absen[0].nama_tipe_absensi+"</div></td>";
+                                html_body_tabel2 += "<td height='81px'>\
+                                <div class='d-flex justify-content-center'><span class='badge badge-outline-primary badge-pill pointer'>"+search_absen[0].nama_tipe_absensi+"</span></div></td>";
                             }                            
                         } else {
-                            html_body_tabel2 += "<td><div class='badge badge-outline-danger badge-pill pointer'>-</div>";
+                            html_body_tabel2 += "<td height='81px'>\
+                                <div class='d-flex justify-content-center'><span class='badge badge-outline-danger badge-pill pointer'>-</span></div></td>";
                         }
 
                         noabsen++;
@@ -272,5 +284,29 @@ use App\Traits\Helper;
         format: "dd-mm-yyyy",
     });
 
+    $(document).on('click','.mark', function (e){            
+        let id_karyawan = $(this).attr('id_karyawan');
+        let tanggal = $(this).attr('tanggal');     
+        $.toast({
+            heading: 'Success',
+            text: 'Attendance data added successfully.',
+            showHideTransition: 'slide',
+            icon: 'success',
+            loaderBg: '#f96868',
+            position: 'bottom-right'
+        });  
+        $.ajax({
+            url: "{{url('marked/save')}}",
+            type: "POST",
+            dataType: 'json',
+            data: {
+                    id_karyawan:id_karyawan,
+                    tanggal:tanggal
+                },            
+            success: function(data){
+                
+            }
+        });
+    })        
 </script>
 @endpush

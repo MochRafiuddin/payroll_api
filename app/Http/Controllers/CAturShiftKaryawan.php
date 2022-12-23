@@ -64,7 +64,7 @@ class CAturShiftKaryawan extends Controller
                             ->where('a.id_karyawan',$id_karyawan)->where('a.tanggal',$tanggal)
                             ->where('a.deleted','1')
                             ->first()->kode_shift ?? '';
-
+        // dd($next_shift->kode_shift."---".$prev_shift);
         if ($prev_shift == $next_shift) {
             return redirect()->back()->withInput();
         }
@@ -78,7 +78,7 @@ class CAturShiftKaryawan extends Controller
 
         if ($prev_shift == 'libur' && $next_shift->kode_shift != 'libur') {
             TAbsensi::where('tanggal',$tanggal)->where('id_karyawan',$id_karyawan)->update(['deleted'=>'0']);
-        }elseif ($prev_shift != 'libur' && $next_shift == 'libur') {
+        }elseif ($prev_shift != 'libur' && $next_shift->kode_shift == 'libur') {
             TAbsensi::insert($arr_ins_t_absensi);
         }
         LogAbsensi::where('tanggal_shift',$tanggal)->where('id_karyawan',$id_karyawan)->update(['jam_masuk_shift'=>$next_shift->jam_masuk,'jam_keluar_shift'=>$next_shift->jam_keluar]);
@@ -93,7 +93,7 @@ class CAturShiftKaryawan extends Controller
 
         $month_year = explode("-", $month_year);
 
-        $data_karyawan = MKaryawan::withDeleted()->select("nama_karyawan","id_karyawan");
+        $data_karyawan = MKaryawan::withDeleted()->select("nama_karyawan","id_karyawan")->where('aktif',1);
         
         if ($id_grup_karyawan || $id_grup_karyawan != "") {
             $data_karyawan->where('id_grup_karyawan',$id_grup_karyawan);

@@ -79,6 +79,48 @@ class CLembur extends Controller
         
         return view('lembur.edit', compact('data'))->with(['title'=>'Edit Lembur Karyawan','alasan'=>$alasan,'id_karyawan_filter'=>$id_karyawan_filter]);
     }
+
+    public function detail($id_karyawan,$tanggal,$id_karyawan_filter)
+    {
+        $absen_karyawan = TAbsensi::where('id_karyawan',$id_karyawan)->where('tanggal',$tanggal)->first();
+        $m_shift_karyawan = MShiftKaryawan::from('m_shift_karyawan as a')
+                    ->leftJoin('m_shift as b','a.id_shift','=','b.id_shift')
+                    ->select('a.*','b.*')
+                    ->where('a.id_karyawan',$id_karyawan)->where('a.tanggal',$tanggal)
+                    ->where('a.deleted','1')
+                    ->where('b.deleted','1')
+                    ->first();
+        $data_lembur = TLembur::where('id_karyawan',$id_karyawan)->where('tanggal',$tanggal)->where('deleted','1')->get();
+        $arr_lembur = [];
+        foreach ($data_lembur as $value) {
+            $arr_lembur[] = [
+                'index_tarif' => $value->index_tarif,
+                'jumlah_jam' => $value->jumlah_jam,
+            ];
+        }
+
+        $data1 = TLembur::where('id_karyawan',$id_karyawan)
+                    ->where('tanggal',$tanggal)
+                    ->where('deleted',1)
+                    ->first();
+        $alasan = $data1->alasan_lembur;
+        $data = [
+            'tanggal_shift' => Carbon::createFromFormat('Y-m-d',$tanggal)->format('d-m-Y'),
+            'def_tanggal_shift' => $tanggal,
+            'id_karyawan' => $id_karyawan,
+            'id_shift' => $m_shift_karyawan->id_shift,
+            'shift_masuk' => $m_shift_karyawan->jam_masuk ?? Carbon::createFromFormat('Y-m-d H:i:s',$absen_karyawan->tanggal_masuk)->format('d-m-Y H:i'),
+            'shift_keluar' => $m_shift_karyawan->jam_keluar ?? Carbon::createFromFormat('Y-m-d H:i:s',$absen_karyawan->tanggal_keluar)->format('d-m-Y H:i'),
+            'waktu_masuk' => Carbon::createFromFormat('Y-m-d H:i:s',$absen_karyawan->tanggal_masuk)->format('d-m-Y H:i'),
+            'waktu_keluar'=> Carbon::createFromFormat('Y-m-d H:i:s',$absen_karyawan->tanggal_keluar)->format('d-m-Y H:i'),
+            'data_lembur' => $arr_lembur,
+            
+        ];
+
+        $data = (object) $data;
+        
+        return view('lembur.detail', compact('data'))->with(['title'=>'Edit Lembur Karyawan','alasan'=>$alasan,'id_karyawan_filter'=>$id_karyawan_filter]);
+    }
     
     public function update(Request $request)
     {
@@ -186,23 +228,28 @@ class CLembur extends Controller
                     //     $btn .= '<a href="'.url('/lembur/edit/'.$row->id_karyawan.'/'.$row->tanggal.'').'" data-tanggal="'.$row->tanggal.'" data-karyawan="'.$row->id_karyawan.'" class="text-warning"><span class="mdi mdi-pen"></span></a>';                        
                     // }
                     $btn .= $this->cek_edit($row->approval,$row->approval2,$row->approval3,$row->id_karyawan,$row->tanggal,$id_karyawan);
+
+                    $btn .= '<a href="javascript:void(0)" class="text-primary mr-2"><span class="mdi mdi-information-outline"></span></a>';  
                 }elseif ($row->approval == 1 && $row->approval2 == 0 && $manager != null) {
                     $btn .= '<a href="javascript:void(0)" data-toggle="modal" data-tanggal="'.$row->tanggal.'" data-karyawanFilter="'.$id_karyawan.'" data-approval="'.$row->approval2.'" data-karyawan="'.$row->id_karyawan.'" data-original-title="Edit" class="text-success editPost"><span class="mdi mdi-check"></span></a>';
                     // if (Helper::can_akses('absensi_lembur_karyawan_edit')) {
                     //     $btn .= '<a href="'.url('/lembur/edit/'.$row->id_karyawan.'/'.$row->tanggal.'').'" data-tanggal="'.$row->tanggal.'" data-karyawan="'.$row->id_karyawan.'" class="text-warning"><span class="mdi mdi-pen"></span></a>';                        
                     // }
                     $btn .= $this->cek_edit($row->approval,$row->approval2,$row->approval3,$row->id_karyawan,$row->tanggal,$id_karyawan);
+                    $btn .= '<a href="javascript:void(0)" class="text-primary mr-2"><span class="mdi mdi-information-outline"></span></a>';  
                 }elseif ($row->approval == 1 && $row->approval2 == 1 && $row->approval3 == 0 && $gm != null) {
                     $btn .= '<a href="javascript:void(0)" data-toggle="modal" data-tanggal="'.$row->tanggal.'" data-karyawanFilter="'.$id_karyawan.'" data-approval="'.$row->approval3.'" data-karyawan="'.$row->id_karyawan.'" data-original-title="Edit" class="text-success editPost"><span class="mdi mdi-check"></span></a>';
                     // if (Helper::can_akses('absensi_lembur_karyawan_edit')) {
                     //     $btn .= '<a href="'.url('/lembur/edit/'.$row->id_karyawan.'/'.$row->tanggal.'').'" data-tanggal="'.$row->tanggal.'" data-karyawan="'.$row->id_karyawan.'" class="text-warning"><span class="mdi mdi-pen"></span></a>';                        
                     // }
                     $btn .= $this->cek_edit($row->approval,$row->approval2,$row->approval3,$row->id_karyawan,$row->tanggal,$id_karyawan);
+                    $btn .= '<a href="javascript:void(0)" class="text-primary mr-2"><span class="mdi mdi-information-outline"></span></a>';  
                 }else {
                     // if (Helper::can_akses('absensi_lembur_karyawan_edit')) {
                     //     $btn .= '<a href="'.url('/lembur/edit/'.$row->id_karyawan.'/'.$row->tanggal.'').'" data-tanggal="'.$row->tanggal.'" data-karyawan="'.$row->id_karyawan.'" class="text-warning"><span class="mdi mdi-pen"></span></a>';                        
                     // }
                     $btn .= $this->cek_edit($row->approval,$row->approval2,$row->approval3,$row->id_karyawan,$row->tanggal,$id_karyawan);
+                    $btn .= '<a href="'.url('/lembur/detail/'.$row->id_karyawan.'/'.$row->tanggal.'/'.$id_karyawan).'" class="text-primary mr-2"><span class="mdi mdi-information-outline"></span></a>';  
                 }                
                 return $btn;
             })
@@ -239,7 +286,7 @@ class CLembur extends Controller
             if ($aproval2==0 || $aproval2==2) {
                 if ($aproval3==0 || $aproval3==2) {
                     if (Helper::can_akses('absensi_lembur_karyawan_edit')) {
-                        $btn .= '<a href="'.url('/lembur/edit/'.$id_karyawan.'/'.$tanggal.'/'.$id_karyawan_filter).'" data-tanggal="'.$tanggal.'" data-karyawan="'.$id_karyawan.'" class="text-warning"><span class="mdi mdi-pen"></span></a>';                        
+                        $btn .= '<a href="'.url('/lembur/edit/'.$id_karyawan.'/'.$tanggal.'/'.$id_karyawan_filter).'" data-tanggal="'.$tanggal.'" data-karyawan="'.$id_karyawan.'" class="text-warning mr-2"><span class="mdi mdi-pen"></span></a>';                        
                     }                    
                 }
             }
@@ -247,17 +294,17 @@ class CLembur extends Controller
             if ($aproval2==2) {
                 if ($aproval3==2) {
                     if (Helper::can_akses('absensi_lembur_karyawan_edit')) {
-                        $btn .= '<a href="'.url('/lembur/edit/'.$id_karyawan.'/'.$tanggal.'/'.$id_karyawan_filter).'" data-tanggal="'.$tanggal.'" data-karyawan="'.$id_karyawan.'" class="text-warning"><span class="mdi mdi-pen"></span></a>';                        
+                        $btn .= '<a href="'.url('/lembur/edit/'.$id_karyawan.'/'.$tanggal.'/'.$id_karyawan_filter).'" data-tanggal="'.$tanggal.'" data-karyawan="'.$id_karyawan.'" class="text-warning mr-2"><span class="mdi mdi-pen"></span></a>';                        
                     }                    
                 }else {
                     if (Helper::can_akses('absensi_lembur_karyawan_edit')) {
-                        $btn .= '<a href="'.url('/lembur/edit/'.$id_karyawan.'/'.$tanggal.'/'.$id_karyawan_filter).'" data-tanggal="'.$tanggal.'" data-karyawan="'.$id_karyawan.'" class="text-warning"><span class="mdi mdi-pen"></span></a>';                        
+                        $btn .= '<a href="'.url('/lembur/edit/'.$id_karyawan.'/'.$tanggal.'/'.$id_karyawan_filter).'" data-tanggal="'.$tanggal.'" data-karyawan="'.$id_karyawan.'" class="text-warning mr-2"><span class="mdi mdi-pen"></span></a>';                        
                     }                    
                 }
             }else {
                 if ($aproval3==2) {
                     if (Helper::can_akses('absensi_lembur_karyawan_edit')) {
-                        $btn .= '<a href="'.url('/lembur/edit/'.$id_karyawan.'/'.$tanggal.'/'.$id_karyawan_filter).'" data-tanggal="'.$tanggal.'" data-karyawan="'.$id_karyawan.'" class="text-warning"><span class="mdi mdi-pen"></span></a>';                        
+                        $btn .= '<a href="'.url('/lembur/edit/'.$id_karyawan.'/'.$tanggal.'/'.$id_karyawan_filter).'" data-tanggal="'.$tanggal.'" data-karyawan="'.$id_karyawan.'" class="text-warning mr-2"><span class="mdi mdi-pen"></span></a>';                        
                     }                    
                 }
             }

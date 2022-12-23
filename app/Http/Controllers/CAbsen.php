@@ -15,6 +15,8 @@ use App\Models\TReportAbsensi;
 use App\Models\TReportAbsensiDetail;
 use App\Models\TLembur;
 use App\Models\MGrupKaryawan;
+use App\Models\LogFingerprintUser;
+use App\Models\LogFingerprint;
 use App\Traits\Helper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -63,6 +65,7 @@ class CAbsen extends Controller
         $karyawan = MKaryawan::select('m_karyawan.*','m_shift.*')
                         ->join('m_shift','m_shift.id_shift','=','m_karyawan.id_shift','left')
                         ->where('m_karyawan.deleted',1)
+                        ->where('m_karyawan.aktif',1)
                         ->orderBy('m_karyawan.nama_karyawan','asc')
                         ->get();
         $mShiftKaryawan = MShiftKaryawan::withDeleted()->get();
@@ -73,6 +76,23 @@ class CAbsen extends Controller
             ->with('title','Absen')
             ->with('karyawan',$karyawan)
             ->with('shift',$mShift)
+            ->with('shift_karyawan',$mShiftKaryawan);
+    }
+    public function fingerprint()
+    {
+        $karyawan = LogFingerprintUser::orderBy('name','asc')->get();
+        $mShiftKaryawan = MShiftKaryawan::withDeleted()->get();
+        $mShift = MShift::withDeleted()->get();
+        $mulai=date('d-m-Y', strtotime(date('d-m-Y')." -1 day"));
+        $akhir=date('d-m-Y');
+        $title_page = "Fingerprint Absensi";
+        return view('absen.form_fingerprint')
+            ->with('titlePage',$title_page)
+            ->with('title','Absen')
+            ->with('karyawan',$karyawan)
+            ->with('shift',$mShift)
+            ->with('mulai',$mulai)
+            ->with('akhir',$akhir)
             ->with('shift_karyawan',$mShiftKaryawan);
     }
     public function priview_import(Request $request)
@@ -92,7 +112,8 @@ class CAbsen extends Controller
 
         Excel::import($import,$file);
         $dataExcel = $import->getData();
-        // dd($dataExcel);
+        $dataExcelSkip = $import->getDataSkip();
+        // dd($dataExcelSkip);
 
         foreach($dataExcel as $key){
             $result = $this->cekKodeFingerPrint($key['kode']);
@@ -102,7 +123,7 @@ class CAbsen extends Controller
             }
         }
         // dd($dataExcel);
-        return response()->json(['status'=>true,'data'=>$dataExcel]);
+        return response()->json(['status'=>true,'data'=>$dataExcel,'data_skip'=>$dataExcelSkip]);
     }
     public function get_log_absensi(Request $request)
     {
@@ -121,7 +142,7 @@ class CAbsen extends Controller
         $data_absensi = TAbsensi::from('t_absensi as a')
         ->leftJoin('m_karyawan as b','a.id_karyawan','b.id_karyawan')
         ->leftJoin('ref_tipe_absensi as c','a.id_tipe_absensi','=','c.id_tipe_absensi')
-        ->select(DB::raw('0 as id,b.kode_fingerprint as kode,a.id_karyawan as id_karyawan,b.nik,b.nama_karyawan,0 as id_shift,a.tanggal as tanggal_shift,null as jam_masuk_shift,null as jam_keluar_shift,null as waktu_masuk,null as waktu_keluar,0 as imported,a.id_tipe_absensi,c.nama_tipe_absensi'))
+        ->select(DB::raw('0 as id,b.kode_fingerprint as kode,a.id_karyawan as id_karyawan,b.nik,b.nama_karyawan,0 as id_shift,a.tanggal as tanggal_shift,null as jam_masuk_shift,null as jam_keluar_shift,null as waktu_masuk,null as waktu_keluar,null as created_date,0 as imported,a.id_tipe_absensi,c.nama_tipe_absensi'))
         ->whereIn('a.id_karyawan',array_unique($arr_id_karyawan))
         ->where('a.id_tipe_absensi','<>','1')->where('a.deleted','1');
 
@@ -164,7 +185,7 @@ class CAbsen extends Controller
             'id_karyawan' => $request->id_karyawan,
             'nik' => $this->getKaryawan($request->id_karyawan)->nik,
             'nama_karyawan' => $this->getKaryawan($request->id_karyawan)->nama_karyawan,
-            'id_shift' => $request->id_karyawan,
+            'id_shift' => $request->id_shift,
             'tanggal_shift' => Carbon::CreateFromFormat('d-m-Y', $request->tanggal_shift)->format('Y-m-d'),
             'jam_masuk_shift' => $this->getMsiftKaryawan($request->id_karyawan, $request->tanggal_shift)->jam_masuk ?? $waktu_masuk,
             'jam_keluar_shift' => $this->getMsiftKaryawan($request->id_karyawan, $request->tanggal_shift)->jam_keluar ?? $waktu_keluar,
@@ -206,6 +227,11 @@ class CAbsen extends Controller
     public function delete_log_absensi(Request $request)
     {
         $id = $request->id;
+        $select = LogAbsensi::where('id',$id)
+                ->select(array('kode', 'id_karyawan', 'nik', 'nama_karyawan', 'id_shift', 'tanggal_shift', 'jam_masuk_shift', 'jam_keluar_shift', 'waktu_masuk', 'waktu_keluar', 'imported', 'created_date'));        
+        $bindings = $select->getBindings();        
+        $insertQuery = "INSERT into temp_log_absensi (kode, id_karyawan, nik, nama_karyawan, id_shift, tanggal_shift, jam_masuk_shift, jam_keluar_shift, waktu_masuk, waktu_keluar, imported, created_date)".$select->toSql();    
+        DB::insert($insertQuery, $bindings);
         LogAbsensi::where('id',$id)->delete();
 
         return response()->json(['status'=>true]);
@@ -246,6 +272,13 @@ class CAbsen extends Controller
         $arr_t_lembur_ins=[];
         $arr_id_log_absensi=[];
         foreach($data_json as $key){
+            $select = TAbsensi::where('id_karyawan',$key['id_karyawan'])
+                ->where('tanggal',$key['tanggal_shift'])
+                ->select(array('id_karyawan', 'tanggal', 'tanggal_masuk', 'tanggal_keluar', 'id_shift', 'menit_lembur', 'menit_terlambat', 'menit_early_leave', 'jam_masuk_shift', 'jam_keluar_shift', 'id_tipe_absensi', 'id_izin', 'created_date', 'created_by', 'updated_date', 'updated_by', 'deleted'));        
+            $bindings = $select->getBindings();        
+            $insertQuery = "INSERT into temp_t_absensi (id_karyawan, tanggal, tanggal_masuk, tanggal_keluar, id_shift, menit_lembur, menit_terlambat, menit_early_leave, jam_masuk_shift, jam_keluar_shift, id_tipe_absensi, id_izin, created_date, created_by, updated_date, updated_by, deleted)".$select->toSql();    
+            DB::insert($insertQuery, $bindings);
+            
             TAbsensi::where('id_karyawan',$key['id_karyawan'])->where('tanggal',$key['tanggal_shift'])->delete();
             TLembur::where('id_karyawan',$key['id_karyawan'])->where('tanggal',$key['tanggal_shift'])->update(['deleted'=>0]);
             // TLembur::where('id_karyawan',$key['id_karyawan'])->where('tanggal',$key['tanggal_shift'])->delete();
@@ -439,7 +472,8 @@ class CAbsen extends Controller
                         // if($nama_hari == 'Sat'){   //jika libur di hari sabtu
                             // $result = ['id_tarif_lembur'=>$key->id_tarif_lembur,'rate'=>$key->index_hari_libur_pendek];
                         // }else{
-                            if ($jabatan == 2 || $jabatan == 5 || $jabatan == 3) {
+                            // dd (in_array($jabatan, explode(",",env("id_jabatan", ""))));
+                            if (in_array($jabatan, explode(",",env("id_jabatan", "")))) {
                                 $result = ['id_tarif_lembur'=>0,'rate'=>0];                                
                             }else {                                
                                 $result = ['id_tarif_lembur'=>$key->id_tarif_lembur,'rate'=>$key->rate_hari_libur_1];
@@ -693,5 +727,109 @@ class CAbsen extends Controller
                     // dd($tanggalTerlambat);
         return $data;
     }
-    
+
+    public function fingerprint_datatable(Request $request)
+    {
+        $dataTam = $request->tampil;
+        $karyawan = $request->karyawan;
+        $mulai = date('Y-m-d', strtotime($request->mulai));
+        $akhir = date('Y-m-d', strtotime($request->akhir));
+        $model = LogFingerprint::join('log_fingerprint_user','log_fingerprint_user.userid','log_fingerprint.userid')
+                ->select('log_fingerprint_user.badgenumber as badgenumber','log_fingerprint_user.name as name','log_fingerprint.id as id','log_fingerprint.userid as userid','log_fingerprint.checktime as checktime','log_fingerprint.checktype as checktype','log_fingerprint.submitted as submitted');
+        if ($dataTam == 0) {
+            $model = $model->where('log_fingerprint.submitted',$dataTam);
+        }
+        if ($mulai != null && $akhir != null) {
+            $model = $model->whereDate('log_fingerprint.checktime', '>=', $mulai)
+                ->whereDate('log_fingerprint.checktime', '<=', $akhir);
+        }
+        if ($karyawan != 0) {
+            $model = $model->where('log_fingerprint.userid', $karyawan);
+        }
+        return DataTables::eloquent($model)
+            ->addColumn('action', function ($row) {
+                $btn = '';                
+                $btn .= '<a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->id.'" data-original-title="Edit" class="editUser text-primary mr-2"><span class="mdi mdi-pen"></span></a>';
+                $btn .= '<a href="'.url('absen/delete-fingerprint/'.$row->id).'" class="text-danger delete mr-2"><span class="mdi mdi-delete"></span></a>';
+
+                return $btn;
+            })
+            ->addColumn('checktype', function ($row) {
+                if ($row->checktype == 0) {
+                    $btn = 'Check In';
+                }else {
+                    $btn = 'Check Out';
+                }
+                
+                return $btn;
+            })
+            ->addColumn('submitted', function ($row) {
+                if ($row->submitted == 1) {
+                    $btn = '<p class="text-success"><span class="mdi mdi-check"></span></p>';
+                }else {
+                    $btn = '';
+                }
+                
+                return $btn;
+            })
+            ->rawColumns(['action','submitted'])
+            ->addIndexColumn()
+            ->toJson();
+    }
+
+    public function get_filter_fingerprint(Request $request)
+    {
+        $dataTam = $request->tampil;
+        $karyawan = $request->karyawan;
+        $mulai = date('Y-m-d', strtotime($request->mulai));
+        $akhir = date('Y-m-d', strtotime($request->akhir));
+        $model = LogFingerprintUser::join('log_fingerprint','log_fingerprint_user.userid','log_fingerprint.userid')
+                ->select('log_fingerprint_user.badgenumber','log_fingerprint_user.name','log_fingerprint.*');
+        if ($dataTam == 0) {
+            $model = $model->where('log_fingerprint.submitted',$dataTam);
+        }
+        if ($mulai != null && $akhir != null) {
+            $model = $model->whereDate('log_fingerprint.checktime', '>=', $mulai)
+                ->whereDate('log_fingerprint.checktime', '<=', $akhir);
+        }
+        if ($karyawan != 0) {
+            $model = $model->where('log_fingerprint.userid', $karyawan);
+        }
+
+        return response()->json(['status'=>true,'data'=>$model]);
+    }
+
+    public function add_fingerprint(Request $request)
+    {
+        // dd(date('Y-m-d H:i:s', strtotime($request->checktime)));
+        $tgl = str_replace("/","-",$request->checktime);
+        $user = new LogFingerprint;
+        $user->userid = $request->id_karyawan_f;
+        $user->checktime = date('Y-m-d H:i:s', strtotime($tgl));
+        $user->checktype = $request->checktype;
+        $user->save();
+   
+        return response()->json(['success'=>'User saved successfully.']);
+    }
+    public function update_fingerprint(Request $request)
+    {
+        $tgl = str_replace("/","-",$request->checktime);
+        // dd(date('Y-m-d H:i:s', strtotime($tgl)));
+        $user = LogFingerprint::where('id',$request->id)->update(['userid' => $request->id_karyawan_f, 'Checktime' => date('Y-m-d H:i:s', strtotime($tgl)), 'checktype' => $request->checktype]);        
+   
+        return response()->json(['success'=>'User saved successfully.']);
+    }
+    public function get_fingerprint($id)
+    {
+        $user = LogFingerprint::where('id',$id)->first();
+        $checktime = date('d-m-Y H:i', strtotime($user->checktime));
+
+        return response()->json(['success'=>'User saved successfully.','data'=>$user,'checktime'=>$checktime]);
+    }
+    public function delete_fingerprint($id)
+    {
+        $user = LogFingerprint::where('id',$id)->delete();
+
+        return response()->json(['success'=>'User saved successfully.']);
+    }
 }

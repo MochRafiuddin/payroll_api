@@ -7,7 +7,7 @@
                 <h4>Total Absensi</h4><br>
                 <div class="row">
                     <div class="form-group col-md-4">
-                        <label for="">Departemen</label>
+                        <label for="">@lang('umum.departemen_label')</label>
                         <select class="form-control js-example-basic-single" name="id_departemen" id="id_departemen"
                              style="width:100%" data-maximum-selection-length="10">
                              @foreach($departemen as $data)

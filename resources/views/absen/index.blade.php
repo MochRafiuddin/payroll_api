@@ -30,7 +30,7 @@
                     </div>
                     <div class="col text-right">
                         @if(Helper::can_akses('absensi_data_fingerprint_import'))
-                            <a class="btn btn-warning" href="{{url('absen/import')}}">Import</a>
+                            <a class="btn btn-warning" href="{{url('absen/fingerprint')}}">Import</a>
                         @endif
                     </div>
                 </div>

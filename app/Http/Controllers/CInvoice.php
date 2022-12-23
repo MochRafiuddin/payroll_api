@@ -18,7 +18,7 @@ class CInvoice extends Controller
         $m_gaji_p = TGajiKaryawanPeriode::where('id',$id)->first();
         $m_p = MPeriode::where('id_periode',$m_gaji_p->id_periode)->first();
         $m_k = MKaryawan::where('id_karyawan',$m_gaji_p->id_karyawan)->first();
-        $m_d = MDepartement::where('id_departemen',$m_k->id_departemen)->first();
+        $m_d = MDepartement::where('id_departemen',$m_k->id_departemen_label)->first();
         $m_j = MJabatan::where('id_jabatan',$m_k->id_jabatan)->first();
         
         $html = view("invoice.voice")

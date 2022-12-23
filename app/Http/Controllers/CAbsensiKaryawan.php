@@ -55,8 +55,9 @@ class CAbsensiKaryawan extends Controller
         $model = TAbsensi::join("m_karyawan","m_karyawan.id_karyawan","=","t_absensi.id_karyawan","left")
                 ->select("m_karyawan.nama_karyawan","m_karyawan.id_karyawan")
                 ->where('t_absensi.deleted',1)
-                ->where('t_absensi.id_tipe_absensi',1)
+                ->where('m_karyawan.aktif',1)
                 ->distinct()->get('t_absensi.id_karyawan');
+                // ->where('t_absensi.id_tipe_absensi',1)
 
         $pluck_id_karyawan = $model->pluck('id_karyawan')->toArray();
 
@@ -64,6 +65,7 @@ class CAbsensiKaryawan extends Controller
                         ->leftJoin('ref_tipe_absensi as b','a.id_tipe_absensi','=','b.id_tipe_absensi')
                         ->select('a.*','b.nama_tipe_absensi')
                         ->whereBetween('a.tanggal', [$start, $end])
+                        ->where('a.deleted',1)
                         ->whereIn('a.id_karyawan',$pluck_id_karyawan)->get();
         // dd($m);
         $data = [

@@ -35,6 +35,7 @@ use App\Http\Controllers\CTotalAbsensi;
 use App\Http\Controllers\CCron;
 use App\Http\Controllers\CTemp;
 use App\Http\Controllers\CNavbar;
+use App\Http\Controllers\CMarkedKaryawan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
@@ -335,6 +336,7 @@ Route::middleware(['auth','language'])->group(function ()
     {
         Route::get('/data/{tanggal}/{karyawan}',[CAbsen::class,'datatable']);
         Route::get('/import',[CAbsen::class,'import']);
+        Route::get('/fingerprint',[CAbsen::class,'fingerprint']);
         Route::get('/get-log-absensi',[CAbsen::class,'get_log_absensi']);
         Route::post('/add-log-absensi',[CAbsen::class,'add_log_absensi']);
         Route::get('/edit-log-absensi',[CAbsen::class,'edit_log_absensi']);
@@ -343,7 +345,13 @@ Route::middleware(['auth','language'])->group(function ()
         Route::post('/priview-import',[CAbsen::class,'priview_import']);
         Route::post('/save-import',[CAbsen::class,'save_import']);
         Route::get('/unduh-format',[CAbsen::class,'download_format_import']);
-       
+       Route::get('/data-fingerprint',[CAbsen::class,'fingerprint_datatable']);
+       Route::get('/get-filter-fingerprint',[CAbsen::class,'get_filter_fingerprint']);
+       Route::get('/get-fingerprint/{id}',[CAbsen::class,'get_fingerprint']);
+       Route::get('/delete-fingerprint/{id}',[CAbsen::class,'delete_fingerprint']);
+       Route::post('/add-fingerprint',[CAbsen::class,'add_fingerprint']);
+       Route::post('/update-fingerprint',[CAbsen::class,'update_fingerprint']);
+       Route::post('/get-fingerprint-data',[CCron::class,'get_fingerprint']);
         
     });
     ### TIPE ABSENSI ###
@@ -404,6 +412,7 @@ Route::middleware(['auth','language'])->group(function ()
         Route::get('/data',[CLembur::class,'datatable']);
         Route::post('/persetujuan',[CLembur::class,'persetujuan']);
         Route::get('/edit/{id_karyawan}/{tanggal}/{id_karyawan_filter}',[CLembur::class,'edit']);
+        Route::get('/detail/{id_karyawan}/{tanggal}/{id_karyawan_filter}',[CLembur::class,'detail']);
         Route::post('/update-lembur',[CLembur::class,'update']);
     });
     ### LEMBUR ###
@@ -422,7 +431,7 @@ Route::middleware(['auth','language'])->group(function ()
     ### absensi karyawan ###
     Route::group(['prefix' => 'absensi-karyawan'],function ()
     {
-        Route::post('/view-filter',[CAbsensiKaryawan::class,'filter']);
+        Route::get('/view-filter',[CAbsensiKaryawan::class,'filter']);
         Route::get('/data',[CAbsensiKaryawan::class,'datatable']);
         Route::get('/get-absensi/{id}/{id1}',[CAbsensiKaryawan::class,'getAbsensiById']);
         Route::get('/export/{id}/{id1}',[CAbsensiKaryawan::class,'ExportAbsensikaryawan'])->middleware('check.role:riwayat_absensi_karyawan_export');
@@ -432,13 +441,25 @@ Route::middleware(['auth','language'])->group(function ()
     {
         Route::get('/print/{id}',[CInvoice::class,'pdfVoice'])->middleware('check.role:riwayat_penggajian_print');
     });
+
+    Route::group(['prefix' => 'marked'],function ()
+    {
+        Route::get('/',[CMarkedKaryawan::class,'index'])->name('marked');
+        Route::post('/save',[CMarkedKaryawan::class,'save']);
+        Route::post('/add-bulk',[CMarkedKaryawan::class,'add_bulk']);
+        Route::get('/delete-bulk',[CMarkedKaryawan::class,'delete_bulk']);
+        Route::post('/save-update',[CMarkedKaryawan::class,'save_update']);
+        Route::get('/data',[CMarkedKaryawan::class,'datatable']);
+    });
     Route::get('/hitung-gaji',[CCalculateGaji::class,'hitung']);
 
 });
  Route::get('/count-attendance/{bulan?}/{tahun?}',[CAbsen::class,'cron']);
  Route::get('/count-attendance-before/{bulan?}/{tahun?}',[CAbsen::class,'cron_mount_before']);
  Route::get('/send-izin-detail',[CTemp::class,'kirim_detail_izin']);
- Route::get('/get-fingerprint-data',[CCron::class,'get_fingerprint']);
+//  Route::get('/get-fingerprint-data',[CCron::class,'get_fingerprint']);
  Route::get('/update-user-new-notif/{id}',[CNavbar::class,'update_user']);
  Route::get('/update-notif/{id}',[CNavbar::class,'update_notif']);
  
+ Route::get('/get-user-fingerprint-data',[CCron::class,'get_user_info']);
+ Route::get('/get-data-fingerprint',[CCron::class,'get_chechinout']);

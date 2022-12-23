@@ -10,7 +10,7 @@
                 <h4>@lang('umum.data_izin')</h4><br>
                     <div class="row">
                         <div class="form-group col-md-3">
-                            <label for="">@lang('umum.departemen')</label>
+                            <label for="">@lang('umum.departemen_label')</label>
                             <select class="form-control js-example-basic-single" name="id_departemen" id="id_departemen"
                                 style="width:100%" data-maximum-selection-length="10">
                                 <option value="0">@lang('umum.semua')</option>

@@ -51,6 +51,8 @@
 <script src="{{asset('/')}}assets/vendors/js/moment.js"></script>
 <script src="{{asset('/')}}assets/js/custom.js"></script>
 <script src="{{asset('/')}}assets/js/file-upload.js"></script>
+<script src="{{asset('/')}}assets/js/tooltips.js"></script>
+<script src="{{asset('/')}}assets/js/popover.js"></script>
 <script type="text/javascript">
     $(".numeric").autoNumeric('init', {
         aPad: false,

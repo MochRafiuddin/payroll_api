@@ -227,7 +227,7 @@ class CRiwayatGajiKaryawan extends Controller
             ->addColumn('slip_gaji', function ($row) {
                 $btn = '';                
                 if (Helper::can_akses('riwayat_penggajian_print')) {                    
-                    $btn .= '<a href="'.url('invoice/print/'.$row->id).'" class="text-warning" target="_blank"><span class="mdi mdi-printer"></span></a>';
+                    $btn .= '<a href="'.url('invoice/print/'.$row->id).'" class="text-warning mr-2" target="_blank"><span class="mdi mdi-printer"></span></a>';
                     $btn .= '<a href="'.url('gaji_karyawan/detail_riwayat/'.$row->id).'" class="text-danger"><span class="mdi mdi-pen"></span></a>';
                 }
                 return $btn;

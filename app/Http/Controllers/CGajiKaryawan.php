@@ -58,14 +58,14 @@ class CGajiKaryawan extends Controller
             $mapGajiK = MapGajiKaryawan::where('id_gaji',$id_gaji)->where('id_karyawan',$id)->first();
             // dd($mapGajiK);
             if($mapGajiK != null){
-                $mapGajiK->nominal = $this->replaceNumeric($nominal);
+                $mapGajiK->nominal = str_replace(",",".",$this->replaceNumeric($nominal));
                 $mapGajiK->update();
             }else{
                 // dd($mapGajiK);
                 $mapGajiK = new MapGajiKaryawan;
                 $mapGajiK->id_karyawan = $id;
                 $mapGajiK->id_gaji = $id_gaji;
-                $mapGajiK->nominal =  $this->replaceNumeric($nominal);
+                $mapGajiK->nominal =  str_replace(",",".",$this->replaceNumeric($nominal));
                 $mapGajiK->save();
             }
 
@@ -79,13 +79,13 @@ class CGajiKaryawan extends Controller
                     $mapGajiKP->id_periode = $id_periode;
                     $mapGajiKP->id_karyawan = $id;
                     $mapGajiKP->id_gaji = $id_gaji;
-                    $mapGajiKP->nominal =  $this->replaceNumeric($nominal);
+                    $mapGajiKP->nominal =  str_replace(",",".",$this->replaceNumeric($nominal));
                     $mapGajiKP->save();
                 }
             }
             
             if($ganti_gaji_periode != null){
-                $mapGajiKP->nominal = $this->replaceNumeric($nominal);
+                $mapGajiKP->nominal = str_replace(",",".",$this->replaceNumeric($nominal));
                 $mapGajiKP->update();
             }
 
@@ -107,6 +107,7 @@ class CGajiKaryawan extends Controller
                     'm_jabatan.id_jabatan',
                     'm_jabatan.nama_jabatan',
                 )->join('m_jabatan','m_karyawan.id_jabatan','=','m_jabatan.id_jabatan')
+                ->where('m_karyawan.aktif',1)
                 ->where('m_karyawan.deleted',1);
         // dd($query->get());
         // foreach($query as $key){    
@@ -170,10 +171,10 @@ class CGajiKaryawan extends Controller
                     $mapGajiKP->id_periode = $id_periode;
                     $mapGajiKP->id_karyawan = $id;
                     $mapGajiKP->id_gaji = $id_gaji;
-                    $mapGajiKP->nominal =  $this->replaceNumeric($nominal);
+                    $mapGajiKP->nominal =  str_replace(",",".",$this->replaceNumeric($nominal));
                     $mapGajiKP->save();
                 }else{
-                    $mapGajiKP->nominal = $this->replaceNumeric($nominal);
+                    $mapGajiKP->nominal = str_replace(",",".",$this->replaceNumeric($nominal));
                     $mapGajiKP->update();
                 }
             }
@@ -198,6 +199,7 @@ class CGajiKaryawan extends Controller
                 ->join('map_gaji_karyawan_periode','map_gaji_karyawan_periode.id_karyawan','=','m_karyawan.id_karyawan')
                 ->where('map_gaji_karyawan_periode.id_periode',Session::get('id_periode'))
                 ->where('m_karyawan.deleted',1)
+                ->where('m_karyawan.aktif',1)
                 ->groupBy('m_karyawan.id_karyawan',
                     'm_karyawan.id_jabatan',
                     'm_karyawan.nik',

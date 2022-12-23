@@ -7,6 +7,12 @@ use App\Traits\Helper;
 
 <div class="main-panel">
     <div class="content-wrapper">
+        <div class="row mb-2">
+            <div class="col-12">
+                <a href="{{url('absen/fingerprint')}}"><button class="btn btn-light" type="button">1. Cek Data Fingerprint</button></a>
+                <button class="btn btn-primary" type="button" disabled>2. Import Data Fingerprint</button>
+            </div>            
+        </div>
         <div class="card">
             <div class="card-body">
                 <h4>Import Absensi</h4><br>
@@ -31,6 +37,13 @@ use App\Traits\Helper;
                             </div>
                         </div>
                     </form>
+                </div>
+                <div class="row mt-3">
+                    <div class="col">
+                        <div id="msg1">
+                            
+                        </div>
+                    </div>
                 </div>
                 <div class="row mt-3">
                     <div class="form-group col-md-5">                        
@@ -77,7 +90,7 @@ use App\Traits\Helper;
                             <span id="text-btn-import" class="ml-2">Submit Data Fingerprint</span>
                         </div>
                     </button>
-                </div>
+                </div>                
                 <!-- <button type="button" id="delete-draft" class="btn btn-danger ">
                     <div class="d-flex align-items-center">
                         <div id="spinner" class="spinner d-none" style="width: 20px; height:20px;"></div>
@@ -100,12 +113,12 @@ use App\Traits\Helper;
           </button>
         </div>
         <div class="modal-body">
-        <form action="{{url('/absen/add-log-absensi')}}" method="post">
+        <form action="" method="post" id="formAdd">
             @csrf
           <label for="tanggal_shift"><small>Tanggal Shift</small></label>
           <input type="text" class="form-control pickerdate" name="tanggal_shift">
           <label for="id_karyawan" style="margin-top:2%;"><small>Karyawan</small></label>
-          <select class="form-control js-example-basic-single" name="id_karyawan"
+          <select class="form-control js-example-basic-single" name="id_karyawan" id="id_karyawan_form_tambah"
                   style="width:100%" data-maximum-selection-length="10" required>
                   <option value="">-- Pilih Karyawan --</option>
               @foreach($karyawan as $data)
@@ -126,7 +139,7 @@ use App\Traits\Helper;
           <input type="text" class="form-control" data-inputmask="'alias': 'datetime'" name="waktu_keluar" required>
         </div>
         <div class="modal-footer">
-          <input type="submit" class="btn btn-success" value="Simpan" id="btn-save"/>
+          <button type="button" class="btn btn-success" id="save-add">Simpan</button>
           <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
         </form>
         </div>
@@ -319,7 +332,7 @@ use App\Traits\Helper;
 
            $('#formEdit').modal('show');
            _JSON = [];
-           generateHtml();
+        //    generateHtml();
            $(".loading").css('display','block');
 
            $.ajax({
@@ -336,12 +349,79 @@ use App\Traits\Helper;
                     $('#formEdit').modal('hide');
                     let start_date = $('input[name="start_date"]').val();
                     let end_date = $('input[name="end_date"]').val();
+                    let karyawan = $('select[name="load_id_karyawan"]').val();
+                    let data = $('input[name="data"]:checked').val();
                     $.ajax({
                         url: "{{url('absen/get-log-absensi')}}",
                         type: "GET",
                         data : {
                             start_date : start_date,
-                            end_date : end_date
+                            end_date : end_date,
+                            karyawan : karyawan,
+                            data : data
+                        },
+                        success: function(res){
+                            showForm();
+                            res.data.forEach(function(dataExcel){
+                                pushJson(dataExcel);
+                            });
+                            
+                            cekJamKosong();
+                            generateHtml();
+
+                            if(btnImport){
+                                $("#save-import").removeAttr('disabled');
+                            }else{
+                                $("#save-import").attr('disabled','disabled');
+                            }
+                            $('#file').removeClass('border-danger');
+                        }
+                    });
+                   
+               }
+           });
+        });
+
+        $("#save-add").on("click", function(e){
+           e.preventDefault();
+
+           let url = "{{url('/absen/add-log-absensi')}}";
+           let id_karyawan = $('#id_karyawan_form_tambah').val();
+           let tanggal_shift = $('input[name="tanggal_shift"]').val();
+           let id_shift = $('select[name="id_shift"]').val();
+           let waktu_masuk = $('input[name="waktu_masuk"]').val();
+           let waktu_keluar = $('input[name="waktu_keluar"]').val();
+            console.log(id_karyawan);
+        //    $('#formTambah').modal('show');
+            $('#formTambah').modal('hide');
+           _JSON = [];
+        //    generateHtml();
+           $(".loading").css('display','block');
+
+           $.ajax({
+               url: url,
+               type: "POST",
+               data : {                   
+                   id_karyawan : id_karyawan,
+                   tanggal_shift : tanggal_shift,
+                   id_shift : id_shift,
+                   waktu_masuk : waktu_masuk,
+                   waktu_keluar : waktu_keluar
+               },
+               success: function(res){
+                    // $('#formTambah').modal('hide');
+                    let start_date = $('input[name="start_date"]').val();
+                    let end_date = $('input[name="end_date"]').val();
+                    let karyawan = $('select[name="load_id_karyawan"]').val();
+                    let data = $('input[name="data"]:checked').val();
+                    $.ajax({
+                        url: "{{url('absen/get-log-absensi')}}",
+                        type: "GET",
+                        data : {
+                            start_date : start_date,
+                            end_date : end_date,
+                            karyawan : karyawan,
+                            data : data
                         },
                         success: function(res){
                             showForm();
@@ -400,7 +480,14 @@ use App\Traits\Helper;
                             $("#save-import").attr('disabled','disabled');
                         }
                         $('#file').removeClass('border-danger');
-
+                        // console.log(res.data_skip);
+                        if (res.data_skip.length > 0) {
+                            $("#msg1").html("<div class='alert alert-warning alert-block'>\
+                                    <button type='button' class='close' data-dismiss='alert'>&times;</button>\
+                                    <h4>Peringatan!!</h4>\
+                                    Data sukses disubmit kecuali untuk karyawan : <br>"+res.data_skip+"<br>karena shift karyawan masih kosong\
+                                </div>");
+                        }
                     }else{
                         showForm();
                         $("#msg").html("<div class='alert alert-danger'> " +res.msg+"</div>");
@@ -575,6 +662,7 @@ use App\Traits\Helper;
         }
 
         $('.salah-checkbox').on('click', function(e) {
+            generateHtml();
             showForm();
             cekJamKosong();
             generateHtml();
@@ -593,7 +681,7 @@ use App\Traits\Helper;
                 html += '<th>Jam Keluar Shift</th>';
                 html += '<th width="17%">Waktu Masuk</th>';
                 html += '<th width="17%">Waktu Keluar</th>';
-                html += '<th>Import</th>';
+                html += '<th>submitted</th>';
                 html += '<th width="">Opsi</th>';
                 html += '</tr>';
                 html += '</thead>';
@@ -619,7 +707,7 @@ use App\Traits\Helper;
                         html += "<td style='white-space: nowrap'>"+(waktu_masuk ?? '')+"</td>";
                         html += "<td style='white-space: nowrap'>"+(waktu_keluar ?? '')+"</td>";
                         if(data.imported==1){
-                            html += "<td>Imported</td>";
+                            html += "<td><p class='text-success'><span class='mdi mdi-check'></span></p></td>";
                         }else{
                             html += "<td></td>";
                         }
@@ -635,7 +723,7 @@ use App\Traits\Helper;
                         html += "<td style='white-space: nowrap'>"+(waktu_masuk ?? '')+"</td>";
                         html += "<td style='white-space: nowrap'>"+(waktu_keluar ?? '')+"</td>";
                         if(data.imported==1){
-                            html += "<td>Imported</td>";
+                            html += "<td><p class='text-success'><span class='mdi mdi-check'></span></p></td>";
                         }else{
                             html += "<td></td>";
                         }
@@ -695,9 +783,11 @@ use App\Traits\Helper;
             html += '</tbody>';
             html += '</table>';
             // console.log(html);
-            $("#target-table").html(html);
+            $("#target-table").html(html);            
             $("#table-priview").DataTable().destroy();
-            $("#table-priview").DataTable();
+            $("#table-priview").DataTable({
+                "bStateSave": true,
+            });
 
             $("#table-priview").on("click", "a.edit", function(){
                let url = $(this).attr('link');
@@ -728,12 +818,16 @@ use App\Traits\Helper;
                    success: function(res){
                         let start_date = $('input[name="start_date"]').val();
                         let end_date = $('input[name="end_date"]').val();
+                        let karyawan = $('select[name="load_id_karyawan"]').val();
+                        let data = $('input[name="data"]:checked').val();
                         $.ajax({
                             url: "{{url('absen/get-log-absensi')}}",
                             type: "GET",
                             data : {
                                 start_date : start_date,
-                                end_date : end_date
+                                end_date : end_date,
+                                karyawan : karyawan,
+                                data : data
                             },
                             success: function(res){
                                 showForm();

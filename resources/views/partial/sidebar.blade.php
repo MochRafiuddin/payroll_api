@@ -182,6 +182,22 @@
             </div>
         </li>
         @endif
+        @if(Helper::can_akses('Update_Bulk')!=null)
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="collapse" href="#perbaikan_data" aria-expanded="false" aria-controls="setting">
+                <i class="mdi mdi-puzzle-outline menu-icon"></i>
+                <span class="menu-title">Perbaikan Data</span>
+                <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse" id="perbaikan_data">
+                <ul class="nav flex-column sub-menu">
+                    @if(Helper::can_akses('Update_Bulk'))
+                    <li class="nav-item"> <a class="nav-link" href="{{route('marked')}}">Update Bulk</a></li>
+                    @endif                    
+                </ul>
+            </div>
+        </li>
+        @endif
         @if(Helper::can_akses('setting_user_list')!=null||Helper::can_akses('setting_role_list')!=null)
         <li class="nav-item">
             <a class="nav-link" data-toggle="collapse" href="#setting" aria-expanded="false" aria-controls="setting">
@@ -195,8 +211,8 @@
                     <li class="nav-item"> <a class="nav-link" href="{{route('user-index')}}">User</a></li>
                     @endif
                     @if(Helper::can_akses('setting_role_list'))
-                    @endif
                     <li class="nav-item"> <a class="nav-link" href="{{route('role-index')}}">Role</a></li>
+                    @endif
                 </ul>
             </div>
         </li>

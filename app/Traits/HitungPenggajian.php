@@ -21,7 +21,7 @@ trait HitungPenggajian
 
         $data_karyawan = DB::select("select a.id_karyawan,a.status_npwp,a.id_status_kawin,a.tanggal_masuk,a.nama_karyawan,b.nilai_ptkp,a.metode_pph21, a.tanggal_akhir_kontrak, c.hari_kerja
             from m_karyawan a, m_status_kawin b, m_grup_karyawan c
-            where a.id_status_kawin = b.id_status_kawin and a.id_grup_karyawan = c.id_grup_karyawan and a.deleted = 1 and a.set_gaji = 1");
+            where a.id_status_kawin = b.id_status_kawin and a.id_grup_karyawan = c.id_grup_karyawan and a.deleted = 1 and a.set_gaji = 1 and a.aktif = 1");
 
         $data_periode = DB::select("select id_periode, bulan, tahun from m_periode where id_periode = {$id_periode}");
 
@@ -31,7 +31,7 @@ trait HitungPenggajian
        
         $data_tarif_pph = MTarifPph::withDeleted()->orderBy('batas_bawah','asc')->get()->toArray();
         
-        $start_id_gaji_karyawan_periode = TGajiKaryawanPeriode::orderBy('id','desc')->where('deleted','1')->first();
+        $start_id_gaji_karyawan_periode = TGajiKaryawanPeriode::orderBy('id','desc')->first();
         if ($start_id_gaji_karyawan_periode) {
             $start_id_gaji_karyawan_periode=$start_id_gaji_karyawan_periode->id+1;
         }else{
@@ -76,9 +76,9 @@ trait HitungPenggajian
                                 ->where('b.id_karyawan',$key->id_karyawan)
                                 // ->where('b.bulan',Session::get('periode_bulan'))
                                 // ->where('b.tahun',Session::get('periode_tahun'))
-                                ->where('id_tipe_absensi','2')
+                                // ->where('id_tipe_absensi','2')
                                 ->whereBetween('a.tanggal',[$tanggal_start,$tanggal_end])
-                                ->whereNotIn('id_tipe_absensi',['1','2','3'])
+                                ->whereNotIn('id_tipe_absensi',['1','2','3','7','8'])
                                 ->count();
             $hari_lembur_holiday = DB::table('t_lembur as a')
                                 ->select('a.tanggal')
@@ -87,14 +87,22 @@ trait HitungPenggajian
                                 ->where('a.deleted','1')
                                 ->groupBy('a.tanggal')
                                 ->get()->count();
-            $hari_kerja_shift = DB::table('t_report_absensi_det as a')
-                                ->leftJoin('t_report_absensi as b','a.id_report_absensi','=','b.id_report_absensi')
-                                ->select('a.tanggal','b.id_tipe_absensi')
-                                ->where('b.id_karyawan',$key->id_karyawan)
-                                ->where('b.bulan',Session::get('periode_bulan'))
-                                ->where('b.tahun',Session::get('periode_tahun'))
-                                // ->whereBetween('a.tanggal',[$tanggal_start,$tanggal_end])
-                                ->where('b.id_tipe_absensi','!=','3')
+            // $hari_kerja_shift = DB::table('t_report_absensi_det as a')
+            //                     ->leftJoin('t_report_absensi as b','a.id_report_absensi','=','b.id_report_absensi')
+            //                     ->select('a.tanggal','b.id_tipe_absensi')
+            //                     ->where('b.id_karyawan',$key->id_karyawan)
+            //                     ->where('b.bulan',Session::get('periode_bulan'))
+            //                     ->where('b.tahun',Session::get('periode_tahun'))
+            //                     // ->whereBetween('a.tanggal',[$tanggal_start,$tanggal_end])
+            //                     ->where('b.id_tipe_absensi','!=','3')
+            //                     ->count();
+
+            $hari_kerja_shift = DB::table('m_shift_karyawan')                                                                
+                                ->where('id_karyawan',$key->id_karyawan)
+                                ->whereMonth('tanggal',Session::get('periode_bulan'))
+                                ->whereYear('tanggal',Session::get('periode_tahun'))
+                                ->where('id_shift','!=',1)
+                                ->where('deleted',1)
                                 ->count();
 
             $gaji_pokok = $this->get_gaji_pokok($data_gaji);
@@ -385,7 +393,7 @@ trait HitungPenggajian
         }
 
         $arr_id_gaji_karyawan_periode = TGajiKaryawanPeriode::whereIn('id_karyawan',$arr_id_karyawan)->where('id_periode',$id_periode)->pluck('id')->toArray();        
-
+// dd($arr_ins_t_gaji_karyawan_periode);
         TGajiKaryawanPeriode::whereIn('id_karyawan',$arr_id_karyawan)->where('id_periode',$id_periode)->update(['deleted'=>0]);
         TGajiKaryawanPeriode::insert($arr_ins_t_gaji_karyawan_periode);
 

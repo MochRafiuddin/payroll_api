@@ -10,7 +10,7 @@
                 <h4>Data Karyawan</h4><br>
                 <div class="row">
                     <div class="form-group col-md-3">
-                        <label for="">Departemen</label>
+                        <label for="">@lang('umum.departemen_label')</label>
                         <select class="form-control js-example-basic-single" name="id_departemen" id="id_departemen" style="width:100%" data-maximum-selection-length="10">
                             <option value="0" selected>Semua</option>
                             @foreach($departemen as $data)
@@ -38,7 +38,8 @@
                                         <th>Nama</th>
                                         <th>Grup Karyawan</th>
                                         <th>Kode Fingerprint</th>
-                                        <th>Departemen</th>
+                                        <th>@lang('umum.departemen_proses')</th>
+                                        <th>@lang('umum.departemen_label')</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
@@ -120,6 +121,11 @@
                     {
                         data: 'nama_departemen',
                         name: 'm_departemen.nama_departemen',
+                        width: 'auto'
+                    },
+                    {
+                        data: 'nama_departemen_label',
+                        name: 'nama_departemen_label',
                         width: 'auto'
                     },
                     {

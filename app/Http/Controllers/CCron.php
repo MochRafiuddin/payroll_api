@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\LogAbsensi;
+use App\Models\LogFingerprintUser;
+use App\Models\LogFingerprint;
 use App\Models\MSetting;
 use App\Models\MKaryawan;
 use App\Models\MShiftKaryawan;
@@ -13,16 +15,64 @@ use Carbon\Carbon;
 
 class CCron extends Controller
 {
-    public function get_fingerprint(){
+    public function get_user_info(){
+        $data_karyawan = DB::connection('adms')->table('userinfo')        
+        ->select('userid','badgenumber','name')->get();
+        
+        LogFingerprintUser::query()->delete();;
+
+        // LogFingerprintUser::create($data_karyawan);
+        // $dataUser = [];
+        foreach ($data_karyawan as $key) {
+            DB::table("log_fingerprint_user")->insert([
+                'userid' => $key->userid,
+                'badgenumber' => $key->badgenumber,
+                'name' => $key->name,
+            ]);
+        }
+        // dd($dataUser);
+        return response()->json(['status'=>true,'msg'=>'Berhasil menyimpan data fingerprint user']);
+    }
+    public function get_chechinout(){
+        $last_id = $this->get_last_id();
+        $data_adms = DB::connection('adms')->table('checkinout')        
+        ->select('userid','checktime','checktype')
+        ->where('checktime','>',$last_id)
+        ->orderBy('checktime', 'ASC')->limit(100)->get()->toArray();
+
+        $index = array_key_last($data_adms);
+        // dd($data_adms[$index]->checktime);
+        MSetting::where('kode','last_id_adms')->update(['nilai' => $data_adms[$index]->checktime]);
+
+        // LogFingerprint::insert($data_adms);
+        foreach ($data_adms as $key) {
+            DB::table("log_fingerprint")->insert([
+                'userid' => $key->userid,
+                'checktime' => $key->checktime,
+                'checktype' => $key->checktype,
+            ]);
+        }
+
+        return response()->json(['status'=>true,'msg'=>'Berhasil menyimpan data fingerprint']);
+    }
+    public function get_fingerprint(Request $request){
+        $data_json = $request->json_import;
+
         $this->data = [];
         $mKaryawan = MKaryawan::withDeleted()->get();
         
-        $last_id = $this->get_last_id();
-        $data_adms = DB::connection('adms')->table('checkinout')
-        ->join('userinfo','userinfo.userid','=','checkinout.userid')
-        ->select('id','userinfo.badgenumber as kode','checktime as tanggal',DB::raw("IF(checktype = 0, 'c/masuk', 'c/keluar') as status"))
-        ->where('checktime','>',$last_id)
-        ->orderBy('checktime', 'ASC')->limit(100)->get();
+        // $last_id = $this->get_last_id();
+        // $data_adms = DB::connection('adms')->table('checkinout')
+        // ->join('userinfo','userinfo.userid','=','checkinout.userid')
+        // ->select('id','userinfo.badgenumber as kode','checktime as tanggal',DB::raw("IF(checktype = 0, 'c/masuk', 'c/keluar') as status"))
+        // ->where('checktime','>',$last_id)
+        // ->orderBy('checktime', 'ASC')->limit(100)->get();
+        LogFingerprint::whereIn("id",$data_json)->update(['submitted' => 1]);
+        $data_adms = DB::table('log_fingerprint')
+        ->join('log_fingerprint_user','log_fingerprint_user.userid','=','log_fingerprint.userid')
+        ->select('id','log_fingerprint_user.badgenumber as kode','checktime as tanggal',DB::raw("IF(checktype = 0, 'c/masuk', 'c/keluar') as status"))
+        ->whereIn('id',$data_json)
+        ->orderBy('checktime', 'ASC')->get();
         // dd($data_adms);
         
         $arr_id_karyawan = [];
@@ -47,6 +97,8 @@ class CCron extends Controller
                             ->get(['a.id_karyawan','a.id_shift','a.tanggal','b.jam_masuk','b.jam_keluar','b.nama_shift']);
 
         // $arr_tanggal = [];
+        $id_skip = [];
+        $nama_skip =[];
         $last_id_adms = 0;
         foreach($data_adms as $row){
 
@@ -60,7 +112,11 @@ class CCron extends Controller
                 $data_shift = $this->getMsiftKaryawan($data_karyawan->id_karyawan, $tanggal);
                 $status = $row->status;
                 // $arr_tanggal[] = $tanggal;
-
+                if ($data_shift == null) {
+                    array_push($id_skip,$row->id);
+                    array_push($nama_skip,'- '.$data_karyawan->nama_karyawan.'<br>');
+                    continue;
+                }
                 $array = [
                             'id' => null,
                             'kode' => (int)$row->kode,
@@ -75,6 +131,7 @@ class CCron extends Controller
                             'waktu_keluar' => ($status == 'c/keluar' ? $tanggal_waktu : null),
                             'waktu_keluar' => ($status == 'c/keluar' ? $tanggal_waktu : null),
                             'imported' => 0,
+                            'created_date' => date('Y-m-d H:i:s'),
                             'status' => strtolower($row->status),
                         ];
 
@@ -182,14 +239,25 @@ class CCron extends Controller
         }
         
         $data = $tdata;
-        if (count($data_adms)==0) {            
-            $last_id_adms = DB::connection('adms')->table('checkinout')->select('checktime')->orderBy('checktime','desc')->first()->checktime;
-        }
+        // if (count($data_adms)==0) {            
+        //     $last_id_adms = DB::connection('adms')->table('checkinout')->select('checktime')->orderBy('checktime','desc')->first()->checktime;
+        // }
+        // dd($id_skip);
+        // dd($data);
+        LogFingerprint::whereIn("id",$id_skip)->update(['submitted' => 0]);
+
+        $select = LogAbsensi::whereIn('id_karyawan',array_unique($arr_id_karyawan))
+                ->whereIn('tanggal_shift',$arr_tanggal_shift)
+                ->select(array('kode', 'id_karyawan', 'nik', 'nama_karyawan', 'id_shift', 'tanggal_shift', 'jam_masuk_shift', 'jam_keluar_shift', 'waktu_masuk', 'waktu_keluar', 'imported', 'created_date'));        
+        $bindings = $select->getBindings();        
+        $insertQuery = "INSERT into temp_log_absensi (kode, id_karyawan, nik, nama_karyawan, id_shift, tanggal_shift, jam_masuk_shift, jam_keluar_shift, waktu_masuk, waktu_keluar, imported, created_date)".$select->toSql();    
+        DB::insert($insertQuery, $bindings);
+        
         LogAbsensi::whereIn('id_karyawan',array_unique($arr_id_karyawan))->whereIn('tanggal_shift',$arr_tanggal_shift)->delete();
         LogAbsensi::insert($data);
-        MSetting::where('kode','last_id_adms')->update(['nilai' => $last_id_adms]);
+        // MSetting::where('kode','last_id_adms')->update(['nilai' => $last_id_adms]);
 
-        return response()->json(['status'=>true,'msg'=>'Berhasil menyimpan data fingerprint']);
+        return response()->json(['status'=>true,'msg'=>'Berhasil menyimpan data fingerprint', 'msg1'=>array_unique($nama_skip)]);
     }
 
     public function get_last_id(){
