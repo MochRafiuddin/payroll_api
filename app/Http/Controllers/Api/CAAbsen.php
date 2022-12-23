@@ -83,7 +83,7 @@ class CAAbsen extends Controller
                 $data[$key]['masuk'] = $m[$hsl]["tanggal_masuk"];
                 $data[$key]['keluar'] = $m[$hsl]["tanggal_keluar"];
                 $data[$key]['terlambat'] = $m[$hsl]["menit_terlambat"];
-                $data[$key]['early leave'] = $m[$hsl]["menit_early_leave"];
+                $data[$key]['early_leave'] = $m[$hsl]["menit_early_leave"];
                 $data[$key]['nama_tipe_absensi'] = $m[$hsl]["nama_tipe_absensi"];
                 $data[$key]['id_tipe_absensi'] = $m[$hsl]["id_tipe_absensi"];
             }else{
@@ -91,7 +91,7 @@ class CAAbsen extends Controller
                 $data[$key]['masuk'] = null;
                 $data[$key]['keluar'] = null;
                 $data[$key]['terlambat'] = null;
-                $data[$key]['early leave'] = null;
+                $data[$key]['early_leave'] = null;
                 $data[$key]['nama_tipe_absensi'] = "tidak masuk";
                 $data[$key]['id_tipe_absensi'] = "0";
             }
