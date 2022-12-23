@@ -36,6 +36,7 @@ use App\Http\Controllers\CCron;
 use App\Http\Controllers\CTemp;
 use App\Http\Controllers\CNavbar;
 use App\Http\Controllers\CMarkedKaryawan;
+use App\Http\Controllers\CSelfi;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
@@ -450,6 +451,14 @@ Route::middleware(['auth','language'])->group(function ()
         Route::get('/delete-bulk',[CMarkedKaryawan::class,'delete_bulk']);
         Route::post('/save-update',[CMarkedKaryawan::class,'save_update']);
         Route::get('/data',[CMarkedKaryawan::class,'datatable']);
+    });
+    Route::group(['prefix' => 'selfi'],function ()
+    {
+        Route::get('/',[CSelfi::class,'index'])->name('selfi');        
+        Route::get('/data',[CSelfi::class,'datatable']);
+        Route::post('/set-status',[CSelfi::class,'set_status']);
+        Route::get('/submit',[CSelfi::class,'submit']);
+        Route::get('/data-submit',[CSelfi::class,'datatable_submit']);
     });
     Route::get('/hitung-gaji',[CCalculateGaji::class,'hitung']);
 

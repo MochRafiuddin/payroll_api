@@ -198,6 +198,25 @@
             </div>
         </li>
         @endif
+        @if(Helper::can_akses('absensi_selfi')!=null || Helper::can_akses('submit_data')!=null)
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="collapse" href="#aplikasi_mobile" aria-expanded="false" aria-controls="setting">
+                <i class="mdi mdi-puzzle-outline menu-icon"></i>
+                <span class="menu-title">Apilikasi Mobile</span>
+                <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse" id="aplikasi_mobile">
+                <ul class="nav flex-column sub-menu">
+                    @if(Helper::can_akses('absensi_selfi'))
+                    <li class="nav-item"> <a class="nav-link" href="{{url('selfi')}}">Absensi Selfi</a></li>
+                    @endif
+                    @if(Helper::can_akses('submit_data'))
+                    <li class="nav-item"> <a class="nav-link" href="{{url('selfi/submit')}}">Submit Data</a></li>
+                    @endif                    
+                </ul>
+            </div>
+        </li>
+        @endif
         @if(Helper::can_akses('setting_user_list')!=null||Helper::can_akses('setting_role_list')!=null)
         <li class="nav-item">
             <a class="nav-link" data-toggle="collapse" href="#setting" aria-expanded="false" aria-controls="setting">
