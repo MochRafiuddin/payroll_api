@@ -67,6 +67,7 @@ class CAAbsen extends Controller
             'terlambat' => $terlambat,
             'early_leave' => $early_leave,
         ];
+        $tipe_absensi = RefTipeAbsensi::where('deleted',1)->get();
         
         $data = [];
         $period = new DatePeriod(
@@ -102,7 +103,8 @@ class CAAbsen extends Controller
             'message' => 'Success',
             'code' => 1,
             'data' => $data,
-            'summary' => $summary
+            'summary' => $summary,
+            'tipe_absensi' => $tipe_absensi
         ], 200);
     }    
 
