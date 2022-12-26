@@ -100,7 +100,7 @@ class CAGaji extends Controller
         foreach ($deduction as $value) {
             $Name1 = array(
                 'nama_gaji' => $value->nama_gaji,
-                'nominal' => str_replace("-","",$value->nominal),
+                'nominal' => intval(str_replace("-","",$value->nominal)),
             );    
             array_push($gaji_deduction,$Name1);
         }
