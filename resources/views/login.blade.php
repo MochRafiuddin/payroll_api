@@ -50,7 +50,7 @@
 		              </div>
 		              	<div class="row mb-4">
 		              		<div class="col text-center">
-		              			<img src="{{asset('/')}}assets/images/lotte.png" width="100%">
+		              			<img src="{{asset('/')}}assets/images/brand-logo-example.png" width="100%">
 		              		</div>
 		              	</div>			    		
 						  	@if(session('success'))
