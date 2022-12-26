@@ -138,18 +138,29 @@ class CAAbsen extends Controller
         $token = MApiKey::where('token',$request->header('auth-key'))->first();
         $user = User::where('id_user',$token->id_user)->first();
 
-        $bulan = $request->bulan;
-        $tahun = $request->tahun;
+        // $bulan = $request->bulan;
+        // $tahun = $request->tahun;
 
         $model = TIzinnCuti::select("t_izin.*",'m_karyawan.nama_karyawan','ref_tipe_absensi.nama_tipe_absensi')
             ->join('m_karyawan','m_karyawan.id_karyawan','=','t_izin.id_karyawan','left')
             ->join('ref_tipe_absensi','ref_tipe_absensi.id_tipe_absensi','=','t_izin.id_tipe_absensi','left')
             ->where('t_izin.deleted',1)
-            ->whereMonth('t_izin.tanggal_mulai',$bulan)
-            ->whereYear('t_izin.tanggal_mulai',$tahun)
-            ->where('t_izin.id_karyawan',$user->id_karyawan)
-            ->get();
-
+            ->where('t_izin.id_karyawan',$user->id_karyawan);
+        // if ($bulan != null) {
+        //     $model = $model->whereMonth('t_izin.tanggal_mulai',$bulan);
+        // }
+        // if ($tahun != null) {
+        //     $model = $model->whereYear('t_izin.tanggal_mulai',$tahun);
+        // }
+        $model = $model->get();
+        foreach ($model as $key => $value) {
+            $appr = MapApprIzin::where('id_izin',$value['id_izin'])->where('approval',0)->first();
+            if ($appr != null) {
+                $value->approved = 'waiting';
+            }else {
+                $value->approved = 'approve';
+            }
+        }
 
         return response()->json([
             'success' => true,
