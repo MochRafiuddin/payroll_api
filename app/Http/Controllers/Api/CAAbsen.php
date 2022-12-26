@@ -156,9 +156,9 @@ class CAAbsen extends Controller
         foreach ($model as $key => $value) {
             $appr = MapApprIzin::where('id_izin',$value['id_izin'])->where('approval',0)->first();
             if ($appr != null) {
-                $value->approved = 'waiting';
+                $value->approved = 0;
             }else {
-                $value->approved = 'approve';
+                $value->approved = 1;
             }
         }
 
