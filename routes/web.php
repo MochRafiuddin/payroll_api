@@ -459,6 +459,8 @@ Route::middleware(['auth','language'])->group(function ()
         Route::post('/set-status',[CSelfi::class,'set_status']);
         Route::get('/submit',[CSelfi::class,'submit']);
         Route::get('/data-submit',[CSelfi::class,'datatable_submit']);
+        Route::post('/get-selfi-data',[CCron::class,'get_selfi']);
+
     });
     Route::get('/hitung-gaji',[CCalculateGaji::class,'hitung']);
 

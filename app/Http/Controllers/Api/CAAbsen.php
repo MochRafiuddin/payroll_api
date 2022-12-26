@@ -317,9 +317,9 @@ class CAAbsen extends Controller
         }
 
         $path = public_path().'/upload/foto';
-        $file->move($path, $file->getClientOriginalName());
+        $foto = round(microtime(true) * 1000).'.'.$file->extension();
+        $file->move($path, $foto);
 
-        // $foto = round(microtime(true) * 1000).'.'.$request->file('foto')->extension();
         // $request->file('foto')->move(public_path('upload/foto'), $foto);
 
         $mCuti = new LogSelfi;
@@ -328,7 +328,7 @@ class CAAbsen extends Controller
         $mCuti->type = 0;
         $mCuti->latitude = $request->latitude;
         $mCuti->longitude = $request->longitude;
-        $mCuti->foto = $file->getClientOriginalName();
+        $mCuti->foto = $foto;
         $mCuti->status = 0;
         $mCuti->save();
 
@@ -344,8 +344,19 @@ class CAAbsen extends Controller
         $token = MApiKey::where('token',$request->header('auth-key'))->first();
         $user = User::where('id_user',$token->id_user)->first();
 
-        $foto = round(microtime(true) * 1000).'.'.$request->file('foto')->extension();
-        $request->file('foto')->move(public_path('upload/foto'), $foto);
+        if(!$request->hasFile('foto')) {
+            return response()->json(['upload_file_not_found'], 400);
+        }
+
+        $file = $request->file('foto');
+        
+        if(!$file->isValid()) {
+            return response()->json(['invalid_file_upload'], 400);
+        }
+
+        $path = public_path().'/upload/foto';
+        $foto = round(microtime(true) * 1000).'.'.$file->extension();
+        $file->move($path, $foto);
 
         $mCuti = new LogSelfi;
         $mCuti->id_karyawan = $user->id_karyawan;
@@ -404,8 +415,8 @@ class CAAbsen extends Controller
             $data ='Belum_absen';
         }
         
-        $in = LogSelfi::whereDate('jam_selfi', date('Y-m-d'))->where('id_karyawan',$user->id_karyawan)->where('type',0)->orderBy('jam_selfi','desc')->first();
-        $out = LogSelfi::whereDate('jam_selfi', date('Y-m-d'))->where('id_karyawan',$user->id_karyawan)->where('type',1)->orderBy('jam_selfi','desc')->first();        
+        $in = LogSelfi::where('jam_selfi','<=', date('Y-m-d H:i:s'))->where('id_karyawan',$user->id_karyawan)->where('type',0)->orderBy('jam_selfi','desc')->first();
+        $out = LogSelfi::where('jam_selfi','<=', date('Y-m-d H:i:s'))->where('id_karyawan',$user->id_karyawan)->where('type',1)->orderBy('jam_selfi','desc')->first();        
 
         if ($in != null) {
             $clockin = date('H:i',strtotime($in->jam_selfi));
@@ -419,12 +430,37 @@ class CAAbsen extends Controller
             $clockout = '-';
         }
 
-        if ($in != null && $out != null) {            
-            $seconds = strtotime($out->jam_selfi) - strtotime($in->jam_selfi);
-            $selisih = intval($seconds / 60 / 60);
-        }elseif ($in != null && $out == null) {
-            $seconds = strtotime(date('Y-m-d H:i:s')) - strtotime($in->jam_selfi);
-            $selisih = intval($seconds / 60 / 60);
+        if ($in != null && $out != null) {                        
+            $time1 = new DateTime($out->jam_selfi);
+            $time2 = new DateTime($in->jam_selfi);
+            $time_diff = $time1->diff($time2);
+            if ($time_diff->h <= 9) {
+                $jam = '0'.$time_diff->h;
+            }else {
+                $jam = $time_diff->h;
+            }
+            if ($time_diff->i <= 9) {
+                $menit = '0'.$time_diff->i;
+            }else{
+                $menit = $time_diff->i;
+            }
+            $selisih = $jam.':'.$menit;
+        }elseif ($in != null && $out == null) {            
+            $time1 = new DateTime(date('Y-m-d H:i:s'));
+            $time2 = new DateTime($in->jam_selfi);
+            $time_diff = $time1->diff($time2);
+            if ($time_diff->h <= 9) {
+                $jam = '0'.$time_diff->h;
+            }else {
+                $jam = $time_diff->h;
+            }
+            if ($time_diff->i <= 9) {
+                $menit = '0'.$time_diff->i;
+            }else{
+                $menit = $time_diff->i;
+            }
+            $selisih = $jam.':'.$menit;
+            // dd($selisih);
         }else{
             $selisih = '-';
         } 
@@ -433,7 +469,9 @@ class CAAbsen extends Controller
             'success' => true,
             'message' => 'Success',
             'clockin' => $clockin,
+            'detail_in' => $in,
             'clockout' => $clockout,
+            'detail_out' => $out,
             'working_hr' => $selisih,
             'status' => $data,
             'code' => 1,

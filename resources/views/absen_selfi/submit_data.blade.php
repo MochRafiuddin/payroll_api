@@ -22,7 +22,7 @@ use App\Traits\Helper;
                         <select class="form-control js-example-basic-single" name="id_karyawan" id="id_karyawan" style="width:100%" data-maximum-selection-length="10">
                             <option value="0">Semua Karyawan</option>
                             @foreach($karyawan as $data)
-                                <option value="{{$data->userid}}">{{$data->name}}</option>
+                                <option value="{{$data->id_karyawan}}">{{$data->nama_karyawan}}</option>
                             @endforeach
                         </select>
                     </div>
@@ -54,11 +54,6 @@ use App\Traits\Helper;
                 <div class="row">
                     <div class="col" style="border-top:1px solid #060606 !important;"></div>
                 </div>
-                <div class="row mt-3">
-                    <div class="col-12 text-right">
-                        <a href="javascript:;" class="btn btn-info" id="tambah_data">Tambah</a>
-                    </div>
-                </div>
                 <br>                
 
                 <div class="row">
@@ -74,8 +69,7 @@ use App\Traits\Helper;
                                         <th>Nama Karyawan</th>
                                         <th>Jam Selfi</th>
                                         <th>Tipe</th>
-                                        <th>Submitted</th>
-                                        <th>Opsi</th>
+                                        <th>Submitted</th>                                        
                                     </tr>
                                 </thead>
                             </table>
@@ -109,42 +103,7 @@ use App\Traits\Helper;
 </div>
 
 <!-- Modal starts -->
-  <!-- <div class="modal fade" id="formTambah" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel-3" aria-hidden="true">
-    <div class="modal-dialog modal-md" style="margin-top:1%;" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="exampleModalLabel-3">Tambah</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-        <form action="" id="postForm" method="post">
-            @csrf
-          <input type="hidden" name="id" id="id" value="">
-          <label for="id_karyawan" style="margin-top:2%;"><small>Karyawan</small></label>
-          <select class="form-control js-example-basic" name="id_karyawan_f" id="id_karyawan_f" style="width:100%" data-maximum-selection-length="10" required>
-                <option value="">-- Pilih Karyawan --</option>
-                @foreach($karyawan as $data)
-                    <option value="{{$data->userid}}">{{$data->name}}</option>
-                @endforeach
-          </select>
-          <label for="waktu_masuk" style="margin-top:2%;"><small>Checktime</small></label>
-          <input type="text" class="form-control" data-inputmask="'alias': 'datetime'" name="checktime" id="checktime" required>
-          <label for="id_shift" style="margin-top:2%;"><small>Tipe</small></label>
-          <select class="form-control" name="checktype" id="checktype" style="width:100%" required>
-            <option value="0">Check In</option>
-            <option value="1">Check Out</option>
-          </select>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-success" id="btn-save">Simpan</button>
-          <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
-        </form>
-        </div>
-      </div>
-    </div>
-  </div> -->
+
   <!-- Modal Ends -->
 
   <!-- Modal starts -->
@@ -262,12 +221,6 @@ use App\Traits\Helper;
                         orderable: false,
                         searchable: false
                     },
-                    {
-                        data: 'action',
-                        name: 'action',
-                        orderable: false,
-                        searchable: false
-                    },
                 ]
             });
         }
@@ -308,7 +261,7 @@ use App\Traits\Helper;
 
             $.ajax({
             type: "POST",
-            url: "{{url('absen/get-fingerprint-data')}}",
+            url: "{{url('selfi/get-selfi-data')}}",
             data: {json_import:param},
             dataType: "JSON",
             success: function (response) {
@@ -338,9 +291,9 @@ use App\Traits\Helper;
         function pushJson(dataExcel){
             _JSON.push({
                 id:dataExcel.id,
-                userid:dataExcel.userid,
-                checktime:dataExcel.checktime,
-                checktype:dataExcel.checktype,
+                userid:dataExcel.id_karyawan,
+                checktime:dataExcel.jam_selfi,
+                checktype:dataExcel.type,
             });
         }
 

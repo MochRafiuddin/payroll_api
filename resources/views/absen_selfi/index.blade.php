@@ -92,13 +92,6 @@
                       <input type="text" name="longitude" id="longitude" class="form-control" placeholder="Longitude" value="" readonly/>
                   </div>
               </div>  
-              
-              <div class="col-12">
-                  <label for="">Gambar</label>
-                  <div class="d-flex justify-content-center">
-                    <img  alt="" id='gambar'>
-                  </div><br>
-              </div>
           </div>
       </div>
       <div class="modal-footer">

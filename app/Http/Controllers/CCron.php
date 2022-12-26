@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\LogAbsensi;
 use App\Models\LogFingerprintUser;
 use App\Models\LogFingerprint;
+use App\Models\LogSelfi;
 use App\Models\MSetting;
 use App\Models\MKaryawan;
 use App\Models\MShiftKaryawan;
@@ -350,5 +351,195 @@ class CCron extends Controller
         }
 
         return (-1);
+    }
+    public function get_selfi(Request $request){
+        $data_json = $request->json_import;
+
+        $this->data = [];
+        LogSelfi::whereIn("id",$data_json)->update(['submitted' => 1]);
+        $data_adms = DB::table('log_selfi')
+        ->join('m_karyawan','m_karyawan.id_karyawan','log_selfi.id_karyawan')
+        ->select('id','log_selfi.id_karyawan','jam_selfi as tanggal',DB::raw("IF(type = 0, 'c/masuk', 'c/keluar') as status"),'m_karyawan.nama_karyawan','m_karyawan.kode_fingerprint','m_karyawan.nik')
+        ->whereIn('id',$data_json)
+        ->orderBy('jam_selfi', 'ASC')->get();
+        // dd($data_adms);
+        
+        $arr_id_karyawan = [];
+        foreach ($data_adms as $key => $row) {
+            if($row != null){
+                $arr_id_karyawan[] = $row->id_karyawan;
+            }
+        }
+        // dd($arr_id_karyawan);
+
+
+        $arr_tanggal_shift = $this->getPluckDataLogOnly($arr_id_karyawan)->pluck('tanggal_shift')->toArray();
+
+        $this->data = $this->getDataLogOnly($arr_id_karyawan);
+        $this->mShiftKaryawan = MShiftKaryawan::from('m_shift_karyawan as a')
+                            ->leftJoin('m_shift as b','a.id_shift','=','b.id_shift')
+                            ->whereIn('id_karyawan',array_unique($arr_id_karyawan))
+                            ->where('a.deleted','1')
+                            ->get(['a.id_karyawan','a.id_shift','a.tanggal','b.jam_masuk','b.jam_keluar','b.nama_shift']);
+
+        // $arr_tanggal = [];
+        $id_skip = [];
+        $nama_skip =[];
+        $last_id_adms = 0;
+        foreach($data_adms as $row){
+
+            if($row != null){                
+                    
+                $tanggal = Carbon::createFromFormat("Y-m-d H:i:s", $row->tanggal)->format('Y-m-d');
+                $tanggal_kemarin = Carbon::createFromFormat("Y-m-d H:i:s", $row->tanggal)->subDays(1)->format('Y-m-d');
+                $tanggal_waktu = Carbon::createFromFormat("Y-m-d H:i:s", $row->tanggal)->format('Y-m-d H:i:s');
+                $data_shift = $this->getMsiftKaryawan($row->id_karyawan, $tanggal);
+                $status = $row->status;
+                // $arr_tanggal[] = $tanggal;
+                if ($data_shift == null) {
+                    array_push($id_skip,$row->id);
+                    array_push($nama_skip,'- '.$row->nama_karyawan.'<br>');
+                    continue;
+                }
+                $array = [
+                            'id' => null,
+                            'kode' => (int)$row->kode_fingerprint,
+                            'id_karyawan' => $row->id_karyawan,
+                            'nik' => $row->nik,
+                            'nama_karyawan' => $row->nama_karyawan,
+                            'id_shift' => $data_shift->id_shift,
+                            'tanggal_shift' => $tanggal,
+                            'jam_masuk_shift' => $data_shift->jam_masuk ?? null,
+                            'jam_keluar_shift' => $data_shift->jam_keluar ?? null,
+                            'waktu_masuk' => ($status == 'c/masuk' ? $tanggal_waktu : null),
+                            'waktu_keluar' => ($status == 'c/keluar' ? $tanggal_waktu : null),
+                            'waktu_keluar' => ($status == 'c/keluar' ? $tanggal_waktu : null),
+                            'imported' => 0,
+                            'created_date' => date('Y-m-d H:i:s'),
+                            'status' => strtolower($row->status),
+                        ];
+
+                // if (count($this->data) == 0) {
+                //     array_push($this->data,$array);
+                // }else{
+        // dd($array);
+
+                    $cek_tgl_kemarin = $this->cekTanggalKemarin($array,$tanggal_kemarin,$status);
+                    if ($cek_tgl_kemarin >= 0) {                        
+                        if ($this->data[$cek_tgl_kemarin]['waktu_masuk'] != "" && $this->data[$cek_tgl_kemarin]['waktu_keluar'] != "") {
+                            $cek_tgl_sekarang = $this->cekTanggalSekarang($array,$status);
+                            if ($cek_tgl_sekarang >= 0) {
+
+                                if ($this->data[$cek_tgl_sekarang]['waktu_masuk'] != "" && $this->data[$cek_tgl_sekarang]['waktu_keluar'] != "") {
+                                    // do nothing
+                                }else{
+                                    if ($status == 'c/masuk') {
+                                        if ($this->data[$cek_tgl_sekarang]['waktu_masuk'] == "") {
+                                            $this->data[$cek_tgl_sekarang]['waktu_masuk'] = $array['waktu_masuk'];
+                                        }
+                                    } elseif ($status == 'c/keluar') {
+                                        if ($this->data[$cek_tgl_sekarang]['waktu_keluar'] == "") {
+                                            $this->data[$cek_tgl_sekarang]['waktu_keluar'] = $array['waktu_keluar'];
+                                        }
+                                    }
+                                }
+
+                            }else{
+                                if ($status == 'c/masuk') {
+                                    array_push($this->data,$array);
+                                }else{
+                                    // do nothing
+                                }
+                            }
+                        }else{
+                            if ($status == $this->data[$cek_tgl_kemarin]['status']) {
+                                array_push($this->data,$array);
+                            }else{
+                                if ($status == 'c/masuk') {
+                                    if ($this->data[$cek_tgl_kemarin]['waktu_masuk'] == "") {
+                                        $this->data[$cek_tgl_kemarin]['waktu_masuk'] = $array['waktu_masuk'];
+                                    }
+                                } elseif ($status == 'c/keluar') {
+                                    if ($this->data[$cek_tgl_kemarin]['waktu_keluar'] == "" ) {
+                                        $cek_tgl_sekarang = $this->cekTanggalSekarang($array,$status);
+                                        if ($cek_tgl_sekarang >= 0) {
+                                            if ($status == 'c/masuk') {
+                                                if ($this->data[$cek_tgl_sekarang]['waktu_masuk'] == "") {
+                                                    $this->data[$cek_tgl_sekarang]['waktu_masuk'] = $array['waktu_masuk'];
+                                                }
+                                            } elseif ($status == 'c/keluar') {
+                                                if ($this->data[$cek_tgl_sekarang]['waktu_keluar'] == "") {
+                                                    $this->data[$cek_tgl_sekarang]['waktu_keluar'] = $array['waktu_keluar'];
+                                                }
+                                            }
+                                        }else{
+                                            $this->data[$cek_tgl_kemarin]['waktu_keluar'] = $array['waktu_keluar'];
+                                        }                          
+                                    }
+                                }
+                            }
+                        }
+
+                    }else{
+
+                        $cek_tgl_sekarang = $this->cekTanggalSekarang($array,$status);
+                        if ($cek_tgl_sekarang >= 0) {
+
+                            if ($this->data[$cek_tgl_sekarang]['waktu_masuk'] != "" && $this->data[$cek_tgl_sekarang]['waktu_keluar'] != "") {
+                                // do nothing
+                            }else{
+                                if ($status == 'c/masuk') {
+                                    if ($this->data[$cek_tgl_sekarang]['waktu_masuk'] == "") {
+                                        $this->data[$cek_tgl_sekarang]['waktu_masuk'] = $array['waktu_masuk'];
+                                    }
+                                } elseif ($status == 'c/keluar') {
+                                    if ($this->data[$cek_tgl_sekarang]['waktu_keluar'] == "") {
+                                        $this->data[$cek_tgl_sekarang]['waktu_keluar'] = $array['waktu_keluar'];
+                                    }
+                                }
+                            }
+
+                        }else{
+                            if ($status == 'c/masuk') {
+                                array_push($this->data,$array);
+                            }else{
+                                // do nothing
+                            }
+                        }
+
+                    }
+                
+
+            }
+        //   }
+          $last_id_adms=$row->tanggal;
+        }
+
+        $tdata = [];
+        foreach ($this->data as $key => $value) {
+            unset($value['status']);
+            $tdata[] = $value;
+        }
+        
+        $data = $tdata;
+        // if (count($data_adms)==0) {            
+        //     $last_id_adms = DB::connection('adms')->table('checkinout')->select('checktime')->orderBy('checktime','desc')->first()->checktime;
+        // }
+        // dd($id_skip);
+        // dd($data);
+        LogSelfi::whereIn("id",$id_skip)->update(['submitted' => 0]);
+
+        $select = LogAbsensi::whereIn('id_karyawan',array_unique($arr_id_karyawan))
+                ->whereIn('tanggal_shift',$arr_tanggal_shift)
+                ->select(array('kode', 'id_karyawan', 'nik', 'nama_karyawan', 'id_shift', 'tanggal_shift', 'jam_masuk_shift', 'jam_keluar_shift', 'waktu_masuk', 'waktu_keluar', 'imported', 'created_date'));        
+        $bindings = $select->getBindings();        
+        $insertQuery = "INSERT into temp_log_absensi (kode, id_karyawan, nik, nama_karyawan, id_shift, tanggal_shift, jam_masuk_shift, jam_keluar_shift, waktu_masuk, waktu_keluar, imported, created_date)".$select->toSql();    
+        DB::insert($insertQuery, $bindings);
+        
+        LogAbsensi::whereIn('id_karyawan',array_unique($arr_id_karyawan))->whereIn('tanggal_shift',$arr_tanggal_shift)->delete();
+        LogAbsensi::insert($data);
+        // MSetting::where('kode','last_id_adms')->update(['nilai' => $last_id_adms]);
+
+        return response()->json(['status'=>true,'msg'=>'Berhasil menyimpan data fingerprint', 'msg1'=>array_unique($nama_skip)]);
     }
 }
