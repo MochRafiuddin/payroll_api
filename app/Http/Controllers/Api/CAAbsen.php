@@ -145,7 +145,8 @@ class CAAbsen extends Controller
             ->join('m_karyawan','m_karyawan.id_karyawan','=','t_izin.id_karyawan','left')
             ->join('ref_tipe_absensi','ref_tipe_absensi.id_tipe_absensi','=','t_izin.id_tipe_absensi','left')
             ->where('t_izin.deleted',1)
-            ->where('t_izin.id_karyawan',$user->id_karyawan);
+            ->where('t_izin.id_karyawan',$user->id_karyawan)
+            ->orderBy('t_izin.created_date','desc');
         // if ($bulan != null) {
         //     $model = $model->whereMonth('t_izin.tanggal_mulai',$bulan);
         // }
