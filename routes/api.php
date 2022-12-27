@@ -39,5 +39,7 @@ Route::group(['middleware' => 'myauth'], function () {
     Route::get('/ubah-password', [CAAuth::class, 'ubah_password']);
     Route::get('/auth-signout', [CAAuth::class, 'logout']);
 
-    Route::get('/detail-profil', [CAAuth::class, 'detail_profil']);    
+    Route::get('/detail-profil', [CAAuth::class, 'detail_profil']);
+
+    Route::get('/tipe-absensi', [CAAbsen::class, 'get_tipe_absensi']);    
 });

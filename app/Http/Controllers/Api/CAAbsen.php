@@ -488,4 +488,18 @@ class CAAbsen extends Controller
             'code' => 1,
         ], 200);
     }
+
+    public function get_tipe_absensi(Request $request)
+    {
+        $token = MApiKey::where('token',$request->header('auth-key'))->first();
+
+        $tipeAbsensi = RefTipeAbsensi::withDeleted()->where('is_show','=',1)->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Success',
+            'code' => 1,
+            'data' => $tipeAbsensi
+        ], 200);
+    }    
 }
