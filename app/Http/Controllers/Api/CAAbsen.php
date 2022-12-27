@@ -426,8 +426,8 @@ class CAAbsen extends Controller
             $data ='Belum_absen';
         }
         
-        $in = LogSelfi::where('jam_selfi','<=', date('Y-m-d H:i:s'))->where('id_karyawan',$user->id_karyawan)->where('type',0)->orderBy('jam_selfi','desc')->first();
-        $out = LogSelfi::where('jam_selfi','<=', date('Y-m-d H:i:s'))->where('id_karyawan',$user->id_karyawan)->where('type',1)->orderBy('jam_selfi','desc')->first();        
+        $in = LogSelfi::whereDate('jam_selfi', date('Y-m-d'))->where('id_karyawan',$user->id_karyawan)->where('type',0)->orderBy('jam_selfi','desc')->first();
+        $out = LogSelfi::whereDate('jam_selfi', date('Y-m-d'))->where('id_karyawan',$user->id_karyawan)->where('type',1)->orderBy('jam_selfi','desc')->first();        
 
         if ($in != null) {
             $clockin = date('H:i',strtotime($in->jam_selfi));
