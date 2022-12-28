@@ -77,7 +77,7 @@
               <div class="col-4">
                   <label for="">Gambar</label>
                   <div class="d-flex justify-content-center">
-                    <img  alt="" id='gambar'>
+                    <img  alt="" id='gambar' width="80%">
                   </div><br>
               </div>
               <div class="col-6">
