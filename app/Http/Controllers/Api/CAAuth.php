@@ -83,7 +83,10 @@ class CAAuth extends Controller
             $token->token = $key;
             $token->save();
 
-            $get_user = User::where('id_user',auth::user()->id_user)->get();
+            $get_user = User::join('m_karyawan','m_karyawan.id_karyawan','m_users.id_karyawan')
+                ->join('m_departemen','m_departemen.id_departemen','m_karyawan.id_departemen_label')
+                ->select('m_users.*','m_departemen.nama_departemen')
+                ->where('m_users.id_user',auth::user()->id_user)->get();
         
         return response()->json([
             'message' => 'Login Success',
