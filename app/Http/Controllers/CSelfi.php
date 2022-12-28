@@ -75,7 +75,7 @@ class CSelfi extends Controller
                 }
                 return $btn;
             })
-            ->rawColumns(['tipe','status_selfi'])
+            ->rawColumns(['action','tipe','status_selfi'])
             ->addIndexColumn()
             ->toJson();
     }
